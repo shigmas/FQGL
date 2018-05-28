@@ -14,6 +14,11 @@ template <typename T> struct FQGLDeclarePtrs {
     typedef FQGLDeclarePtrs<class type>::SharedPtr  type##SharedPtr; \
     typedef FQGLDeclarePtrs<class type>::Ptr        type##Ptr;
     
-
+#define FQGL_NUM_FRAMEBUFFERS 3
+enum FQGLFramebufferType {
+    FQGLTextureFramebufferType = 0,
+    FQGLPickingFramebufferType = 1,
+    FQGLDefaultFramebufferType = 2,
+};
 
 #endif // FQGLTYPES_H

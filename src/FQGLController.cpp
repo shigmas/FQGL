@@ -4,6 +4,7 @@
 #include "FQGLWidget.h"
 
 FQGLController::FQGLController() :
+    //    _widget(NULL),
     _responder(NULL)
 {
 }
@@ -14,7 +15,7 @@ FQGLController::~FQGLController()
 }
 
 void
-FQGLController::SetWidget(FQGLWidgetSharedPtr widget)
+FQGLController::SetWidget(const FQGLWidgetPtr& widget)
 {
     _widget = widget;
 }
@@ -26,10 +27,21 @@ FQGLController::SetResponder(FQGLResponder * responder)
 }
 
 void
-FQGLController::ReceivedTap(const QVector3D& location) const
+FQGLController::ReceivedTap(const QVector2D& location, TapType tapType) const
 {
     if (_responder) {
-        _responder->HandleSingleTap(location);
+        if ((tapType == DoubleTapType) || (tapType == RightTapType)) {
+            _responder->HandleRightTap(location);
+        } else {
+            _responder->HandleSingleTap(location);
+        }
     }
 }
 
+void
+FQGLController::RenderComplete()
+{
+    if (_responder) {
+        _responder->OnRenderComplete();
+    }
+}

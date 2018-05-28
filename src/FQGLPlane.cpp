@@ -18,6 +18,6 @@ FQGLPlane::FQGLPlane(const QVector3D& v0, const QVector3D& v1,
 float
 FQGLPlane::DistanceFromPlane(const QVector3D& point) const
 {
-    return _d + QVector3D::dotProduct(_normal, _point);
+    return _d + QVector3D::dotProduct(_normal, point);
 
 }

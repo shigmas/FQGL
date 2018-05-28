@@ -39,7 +39,7 @@ FQGLCamera::GetFrustum() const
         return FQGLFrustum(_perspProps.width, _perspProps.height,
                            _perspProps.fov, _perspProps.nearPlane,
                            _perspProps.farPlane, position, lookAt, up);
-        // BROKEN
+        // XXX BROKEN
         // return FQGLFrustum(_orthoProps.width, _orthoProps.height,
         //                    _orthoProps.nearPlane, _orthoProps.farPlane,
         //                    GetPosition(), GetLookAt(), GetUp());
@@ -166,4 +166,10 @@ FQGLCamera::_CreateGeometry(FQGLPrimVertex **vertices,
     Q_UNUSED(vertices);
     Q_UNUSED(numVertices);
     // We actually have no geometry to create.
+}
+
+GLenum
+FQGLCamera::_GetDrawMode() const
+{
+    return GL_TRIANGLES;
 }

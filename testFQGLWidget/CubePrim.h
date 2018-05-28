@@ -1,22 +1,22 @@
 #include "FQGLPrim.h"
 
 
-class LoupePrim : public FQGLPrim
+class CubePrim : public FQGLPrim
 {
 public:
-    LoupePrim(float radius, int numSamples, float magnification,
-              const QVector4D& color);
-    ~LoupePrim();
+    CubePrim(float length, const QVector4D& color);
+    virtual ~CubePrim();
 
 protected:
     virtual void _CreateGeometry(FQGLPrimVertex **vertices,
                                  uint &numVertices) override;
 
+    virtual void _CreateIndices(GLuint **indices,
+                                uint &numIndices) override;
+
     GLenum _GetDrawMode() const override;
 
 private:
-    float _radius;
-    int _numSamples;
-    float _magnification;
+    float _length;
     QVector4D _color;
 };

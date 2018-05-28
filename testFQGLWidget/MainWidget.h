@@ -8,7 +8,8 @@ class QLabel;
 class QLineEdit;
 class QVBoxLayout;
 
-FQGL_DECLARE_PTRS(CirclePrim);
+FQGL_DECLARE_PTRS(LoupePrim);
+FQGL_DECLARE_PTRS(CubePrim);
 FQGL_DECLARE_PTRS(FQGLController);
 FQGL_DECLARE_PTRS(FQGLWidget);
 
@@ -19,14 +20,18 @@ class MainWidget : public QWidget,
 
 public:
     MainWidget(QWidget * parent = 0);
-    ~MainWidget();
+    virtual ~MainWidget();
 
-    virtual void HandleSingleTap(const QVector3D& location) override;
+    virtual void HandleSingleTap(const QVector2D& location) override;
+    virtual void HandleRightTap(const QVector2D& location) override;
+
+    virtual void OnRenderComplete() override;
 
 protected:
     void _SetLayout();
 
 private:
+
     QVBoxLayout * _mainLayout;
     QHBoxLayout * _topLayout;
     QHBoxLayout * _bottomLayout;
@@ -35,7 +40,8 @@ private:
     QLineEdit * _text;
     FQGLWidgetSharedPtr _widget;
 
-    CirclePrimSharedPtr _circle;
+    LoupePrimSharedPtr _loupe;
+    CubePrimSharedPtr _cube;
 
     FQGLControllerSharedPtr _controller;
 };

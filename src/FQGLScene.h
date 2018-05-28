@@ -4,8 +4,10 @@
 
 #include "FQGLTypes.h"
 
+#include <QOpenGLFunctions>
 #include <QVector2D>
 #include <QVector3D>
+#include <QVector4D>
 
 #include <vector>
 
@@ -14,53 +16,63 @@ FQGL_DECLARE_PTRS(FQGLPrim);
 
 FQGL_DECLARE_PTRS(QOpenGLShaderProgram)
 
-
 // Describes a scene. has a camera and prims. This is driven by the
-// FQGLwidget.
-class FQGLScene
+// FQGLwidget. It's the 3D world, not windowing
+class FQGLScene : protected QOpenGLFunctions
 {
 public:
     FQGLScene(int width = 0, int height = 0);
 
     FQGLScene(const char * vertexShader,
-              const char * fragmentShader,
-              const char * geomShader = NULL,
-              const char * TessControlShader = NULL,
-              const char * TessEvalShader = NULL,
-              const char * computeShader = NULL);
+              const char * basicShader,
+              const char * textureShader);
 
     virtual ~FQGLScene();
 
     void SetPerspective(int width, int height);
 
     void SetShaders(const char * vertexShader,
-                    const char * fragmentShader);
+                    const char * basicShader,
+                    const char * textureShader);
     
     void Initialize();
 
-    void AddPrim(const FQGLPrimSharedPtr& prim);
+    void AddPrim(const FQGLPrimSharedPtr& prim, bool asStencilPrim=false);
 
-    void Render();
+    QOpenGLShaderProgramSharedPtr GetShader(bool basicShader=true) const;
+
+    void Render(const QVector4D& clearColor,
+                FQGLFramebufferType frameBufferType);
 
     // For interactions, we provide an API to get points in the screen.
     QVector3D GetCameraScreenPoint(const QVector2D& screenPoint) const;
-    
-protected:
-    QOpenGLShaderProgram * _InitShaders(const char * vertexShader,
-                                        const char * fragmentShader,
-                                        const char * geomShader = NULL,
-                                        const char * tessControlShader = NULL,
-                                        const char * tessEvalShader = NULL,
-                                        const char * computeShader = NULL);
 
+    static QOpenGLShaderProgram *InitShaders(const char * vertexShader,
+                                             const char * fragmentShader);
+
+
+protected:
+    enum TestType {
+        AllSamplePassedTestType,
+        AnySamplePassedTestType,
+    };
     void _InitPrims();
 
+    bool _RenderPrim(const FQGLPrimSharedPtr& prim, bool isTesting=false,
+                     TestType testType=AllSamplePassedTestType);
+    
 private:
-    QOpenGLShaderProgramSharedPtr _sceneShader;
+    QOpenGLShaderProgramSharedPtr _basicShader;
+    QOpenGLShaderProgramSharedPtr _textureShader;
     FQGLCameraSharedPtr _camera;
 
     std::vector<FQGLPrimSharedPtr> _prims;
-    const char * _shaders[6];
+    std::vector<FQGLPrimSharedPtr> _stencilPrims;
+
+    const char * _shaders[3];
+
+    // this may switch to more tests at some point, but for now, array of 1.
+    GLuint _queryIds[2];
 };
 
 #endif

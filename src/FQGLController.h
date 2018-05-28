@@ -3,7 +3,7 @@
 
 #include "FQGLTypes.h"
 
-#include <QVector3D>
+#include <QVector2D>
 
 FQGL_DECLARE_PTRS(FQGLResponder);
 FQGL_DECLARE_PTRS(FQGLWidget);
@@ -12,19 +12,28 @@ FQGL_DECLARE_PTRS(FQGLWidget);
 class FQGLController
 {
 public:
+    enum TapType {
+        SingleTapType,
+        DoubleTapType,
+        LeftTapType,
+        RightTapType,
+    };
+
     FQGLController();
     virtual ~FQGLController();
 
-    void SetWidget(FQGLWidgetSharedPtr widget);
+    void SetWidget(const FQGLWidgetPtr& widget);
 
     void SetResponder(FQGLResponder * responder);
 
-    void ReceivedTap(const QVector3D& location) const;
-    
+    void ReceivedTap(const QVector2D& location, TapType tapType) const;
+
+    void RenderComplete();
+
 protected:
 
 private:
-    FQGLWidgetSharedPtr _widget;
+    FQGLWidgetPtr _widget;
     FQGLResponder* _responder;
 };
 

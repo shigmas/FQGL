@@ -10,11 +10,13 @@ CONFIG -= app_bundle
 SOURCES += main.cpp
 
 SOURCES += \
-    CirclePrim.cpp \
+    LoupePrim.cpp \
+    CubePrim.cpp \
     MainWidget.cpp \
 
 HEADERS += \
-    CirclePrim.h \
+    LoupePrim.h \
+    CubePrim.h \
     MainWidget.h \
 
 RESOURCES += \
