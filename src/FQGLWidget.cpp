@@ -16,7 +16,7 @@ FQGLWidget::FQGLWidget(FQGLControllerPtr controller,
                        const QVector4D& clearColor, QWidget *parent) :
     QOpenGLWidget(parent),
     _controller(controller),
-    _scene(new FQGLScene),
+    _scene(std::make_shared<FQGLScene>()),
     _clearColor(clearColor),
     _lastX(-1),
     _lastY(-1)
@@ -51,6 +51,7 @@ FQGLWidget::FQGLWidget(FQGLControllerPtr controller,
 
 FQGLWidget::~FQGLWidget()
 {
+    qDebug() << "~FQGLWidget";
 }
 
 void
@@ -87,8 +88,8 @@ FQGLWidget::EnableTextureBuffer()
         format.setTextureTarget(GL_TEXTURE_2D);
 
         // Not sure why we need to be twice the size to get the whole screen.
-        QOpenGLFramebufferObjectSharedPtr fb = QOpenGLFramebufferObjectSharedPtr
-            (new QOpenGLFramebufferObject(2*size(), format));
+        QOpenGLFramebufferObjectSharedPtr fb =
+            std::make_shared<QOpenGLFramebufferObject>(2*size(), format);
 
         // Creating the buffer binds it, so bind back to the default.
         fb->bindDefault();
@@ -122,8 +123,8 @@ FQGLWidget::EnablePickTestingBuffer()
         QOpenGLFramebufferObjectFormat format;
         format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
 
-        QOpenGLFramebufferObjectSharedPtr fb = QOpenGLFramebufferObjectSharedPtr
-            (new QOpenGLFramebufferObject(size(), format));
+        QOpenGLFramebufferObjectSharedPtr fb =
+            std::make_shared<QOpenGLFramebufferObject>(size(), format);
         glEnable(GL_STENCIL_TEST);
         // XXX - do this later. This makes the whole window go black
         // // Passes if ( ref & mask ) != ( stencil & mask ).
@@ -171,7 +172,7 @@ FQGLWidget::GetTextureIdFromLastRender()
 QVector3D
 FQGLWidget::ToScenePoint(const QVector2D& ndcPoint) const
 {
-    return _scene->GetCameraScreenPoint(ndcPoint);
+    return _scene->GetNDCPointFromScreen(ndcPoint);
 }
 
 QVector2D
@@ -204,20 +205,27 @@ FQGLWidget::resizeGL(int w, int h)
 void::
 FQGLWidget::paintGL()
 {
+    bool didPreRender = false;
     for (int i = 0 ; i < FQGL_NUM_FRAMEBUFFERS ; ++i) {
         if (_framebuffers[i].second) {
             _framebuffers[i].first->bind();
             _scene->Render(_clearColor, (FQGLFramebufferType) i);
+            didPreRender = true;
             if (i == FQGLTextureFramebufferType) {
                 _framebuffers[i].first->toImage().save("foo.png");
             }
         }
     }
+    FQGLControllerSharedPtr ctrlr = FQGLControllerSharedPtr(_controller);
+    if (didPreRender && ctrlr) {
+        ctrlr->PreRenderComplete();
+    }
     
     QOpenGLFramebufferObject::bindDefault();
+    glDisable(GL_DEPTH_TEST);
     _scene->Render(_clearColor, FQGLDefaultFramebufferType);
 
-    if (FQGLControllerSharedPtr ctrlr = FQGLControllerSharedPtr(_controller)) {
+    if (ctrlr) {
         ctrlr->RenderComplete();
     }
 }

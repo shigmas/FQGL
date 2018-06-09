@@ -5,7 +5,7 @@
 #include "FQGLScene.h"
 #include "FQGLWidget.h"
 
-#include "LoupePrim.h"
+#include "SquareLoupePrim.h"
 #include "CubePrim.h"
 
 #include <QGridLayout>
@@ -19,7 +19,7 @@ FQGL_DECLARE_PTRS(FQGLScene);
 MainWidget::MainWidget(QWidget * parent) :
     QWidget(parent),
     FQGLResponder(),
-    _controller(new FQGLController)
+    _controller(std::make_shared<FQGLController>())
 {
     _controller->SetResponder(this);
     _SetLayout();
@@ -35,17 +35,19 @@ MainWidget::MainWidget(QWidget * parent) :
     _widget->SetScenePerspective(width(), height());
 
     QVector4D gray(.75, 0.25, 0.25, 1.0f);
-    _loupe = LoupePrimSharedPtr(new LoupePrim(0.3, 4, 1.5, gray));
+    _loupe = std::make_shared<SquareLoupePrim>(0.5, 1.5, gray);
+    _loupe->SetTextureByResourcePath(":/resources/raideen.jpg");
     _widget->AddPrimToScene(_loupe,true);
 
     QVector4D green(.1, 0.25, 0.75, 0.50);
-    _cube = CubePrimSharedPtr(new CubePrim(0.2, green));
+    _cube = std::make_shared<CubePrim>(0.35, green);
     _cube->SetTranslate(QVector3D(0.0f, 0.0f, -.21f));
     _widget->AddPrimToScene(_cube);
 }
 
 MainWidget::~MainWidget()
 {
+    qDebug() << "~MainWidget";
 }
 
 void
@@ -77,17 +79,22 @@ MainWidget::HandleRightTap(const QVector2D& location)
 }
 
 void
-MainWidget::OnRenderComplete()
+MainWidget::OnPreRenderComplete()
 {
-    qDebug() << "Render complete";
+    qDebug() << "PreRender complete";
     GLuint texId = _widget->GetTextureIdFromLastRender();
     if (_widget->IsTextureBufferEnabled() &&
         (texId != GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS)) {
         _loupe->SetTextureById(texId);
     }
+}
+
+void
+MainWidget::OnRenderComplete()
+{
+    qDebug() << "Render complete";
     _widget->DisablePickTestingBuffer();
     _widget->DisableTextureBuffer();
-    
 }
 
 void

@@ -132,16 +132,60 @@ FQGLFrustum::FQGLFrustum(QVector3D * points, FQGLPlane *planes,
 }
 
 QVector3D
-FQGLFrustum::GetPointInFrustum(const QVector3D& cameraUp,
-                               const QVector2D& screenPoint,
-                               const float& aspect,
-                               const float& distance) const
+FQGLFrustum::ConvertFrustumPoint(const QVector3D& cameraUp,
+                                 const float& aspect,
+                                 const QVector3D& point,
+                                 const float& depth) const
 {
     QVector3D fwNormal = _GetDirectionNormal(_position, _lookAt);
     QVector3D rightNormal = _GetRightNormal(cameraUp, fwNormal);
     QVector3D upNormal = cameraUp.normalized();
 
-    float zDist = distance != -1.0f ? distance : (_position - _lookAt).length();
+    // First, verify the frustumPoint is actually in the frustum
+    // if (!IsPointInFrustum(point)) {
+    //     return point;
+    // }
+
+    QVector3D pointRelative = point - _position;
+    // Similar to ScreenPointToFrustum, but we need to find the height and
+    // width though the point. So, get the projections on the normals.
+    float ptHeight = QVector3D::dotProduct(pointRelative, upNormal);
+    float ptWidth = QVector3D::dotProduct(pointRelative, rightNormal);
+    float ptDepth = QVector3D::dotProduct(pointRelative, fwNormal);
+
+    float actualDepth = depth + _nearPlane;
+    // With these, get the ratios
+    float height = _GetHeightFromDistance(ptDepth, _fovAngle);
+    // NDC, so these are ratios already.
+    float heightAtDepthRatio = ptHeight * height;
+    float widthAtDepthRatio = ptWidth * (height * aspect);
+
+    // Now, apply these as ratios to get the resulting point. We have depth to
+    // use to apply it to height and width.
+    QVector3D result = actualDepth * fwNormal + heightAtDepthRatio * upNormal +
+        widthAtDepthRatio * rightNormal;
+
+    return result;
+}
+
+QVector2D
+FQGLFrustum::NDCPointToScreen(const QVector3D& cameraUp,
+                              const float& aspect,
+                              const QVector3D& point) const
+{
+    return _GetScreenPointFromNDC(cameraUp, aspect, point);
+}
+
+QVector3D
+FQGLFrustum::ScreenPointToFrustum(const QVector3D& cameraUp,
+                                  const QVector2D& screenPoint,
+                                  const float& aspect) const
+{
+    QVector3D fwNormal = _GetDirectionNormal(_position, _lookAt);
+    QVector3D rightNormal = _GetRightNormal(cameraUp, fwNormal);
+    QVector3D upNormal = cameraUp.normalized();
+
+    float zDist = (_position - _lookAt).length();
     // Width and height at the distance.
     float height = _GetHeightFromDistance(zDist, _fovAngle);
     float width = height * aspect;
@@ -270,12 +314,42 @@ FQGLFrustum::IsFaceInFrustum(const std::vector<QVector3D>& face,
     return intersect or (inPlanes == 6);
 }
 
+QVector2D
+FQGLFrustum::_GetScreenPointFromNDC(const QVector3D& cameraUp,
+                                    const float& aspect,
+                                    const QVector3D& point) const
+{
+    QVector3D fwNormal = _GetDirectionNormal(_position, _lookAt);
+    QVector3D rightNormal = _GetRightNormal(cameraUp, fwNormal);
+    QVector3D upNormal = cameraUp.normalized();
+
+    // First, verify the frustumPoint is actually in the frustum
+    // if (!IsPointInFrustum(point)) {
+    //     return point;
+    // }
+
+    QVector3D pointRelative = point - _position;
+    // Similar to ScreenPointToFrustum, but we need to find the height and
+    // width though the point. So, get the projections on the normals.
+    float ptHeight = QVector3D::dotProduct(pointRelative, upNormal);
+    float ptWidth = QVector3D::dotProduct(pointRelative, rightNormal);
+    float ptDepth = QVector3D::dotProduct(pointRelative, fwNormal);
+
+    // With these, get the ratios
+    float height = _GetHeightFromDistance(ptDepth, _fovAngle);
+    // NDC, so these are ratios already.
+    float heightAtDepthRatio = ptHeight * height;
+    float widthAtDepthRatio = ptWidth * (height * aspect);
+
+    return QVector2D(widthAtDepthRatio,heightAtDepthRatio);
+}
+
 float
-FQGLFrustum::_GetHeightFromDistance(const float& near, const float& fov) const
+FQGLFrustum::_GetHeightFromDistance(const float& dist, const float& fov) const
 {
     float angle = qDegreesToRadians(fov)/2.0f;
 
-    return qTan(angle) * near;
+    return qTan(angle) * dist;
 }
 
 QVector3D

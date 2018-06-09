@@ -39,6 +39,14 @@ FQGLController::ReceivedTap(const QVector2D& location, TapType tapType) const
 }
 
 void
+FQGLController::PreRenderComplete()
+{
+    if (_responder) {
+        _responder->OnPreRenderComplete();
+    }
+}
+
+void
 FQGLController::RenderComplete()
 {
     if (_responder) {

@@ -39,17 +39,26 @@ public:
 
     void AddPrim(const FQGLPrimSharedPtr& prim, bool asStencilPrim=false);
 
-    QOpenGLShaderProgramSharedPtr GetShader(bool basicShader=true) const;
+    QOpenGLShaderProgramSharedPtr GetShader(bool getTexShader=true) const;
 
     void Render(const QVector4D& clearColor,
                 FQGLFramebufferType frameBufferType);
 
-    // For interactions, we provide an API to get points in the screen.
-    QVector3D GetCameraScreenPoint(const QVector2D& screenPoint) const;
+    // For interactions, we provide screen <-> space conversions. This can also
+    // be used for texture points (with an extra conversion.
+    QVector2D GetScreenPointFromNDC(const QVector3D& ndcPoint) const;
 
-    static QOpenGLShaderProgram *InitShaders(const char * vertexShader,
-                                             const char * fragmentShader);
+    // For a screen point in 2D NDC space, it will return a 3D point in the
+    // camera frustum. The default is a depth of 0.0 (in the camera near plane.
+    QVector3D GetNDCPointFromScreen(const QVector2D& screenPoint) const;
 
+    static QOpenGLShaderProgramSharedPtr InitShaders(const char * vertexShader,
+                                                     const char * fragmentShader);
+
+    // Increments and returns the next binding unit. Not reentrant
+    uint GetNextTextureBindingUnit();
+
+    uint GetCurrentTextureBindingUnit() const;
 
 protected:
     enum TestType {
@@ -66,6 +75,7 @@ private:
     QOpenGLShaderProgramSharedPtr _textureShader;
     FQGLCameraSharedPtr _camera;
 
+    uint _currentTextureUnit;
     std::vector<FQGLPrimSharedPtr> _prims;
     std::vector<FQGLPrimSharedPtr> _stencilPrims;
 

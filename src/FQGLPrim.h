@@ -46,7 +46,23 @@ public:
     virtual void SetTranslate(const QVector3D& translate);
 
 protected:
-    // This function allocates the vertices, and sets numVertices
+    enum _PrimMode {
+        WireFramePrimMode,
+        TexturePrimMode,
+    };
+    // Helper functions for subclasses
+    QVector3D _GetScreenPointFromNDCPoint(const QVector3D& ndc) const;
+    QVector3D _GetNDCPointFromScreenPoint(const QVector2D& screen) const;
+
+    // Just drop the z, and convert to NDC space to texture space
+    QVector2D _ScreenNdcToTex(const QVector3D& screen) const;
+    
+    QOpenGLTextureSharedPtr _InitializeTexture() const;
+
+    // This function allocates the vertices, and sets numVertices. This is
+    // called by Initialize, so the scene is set, if we need it to transform
+    // points (to screen space, for instance). But, this method is only called
+    // at initialization, and on not every camera movement.
     virtual void _CreateGeometry(FQGLPrimVertex **vertices,
                                  uint &numVertices) = 0;
 
@@ -55,7 +71,7 @@ protected:
     virtual void _CreateIndices(GLuint **indices,
                                 uint &numIndices);
 
-    virtual GLenum _GetDrawMode() const = 0;
+    virtual GLenum _GetDrawMode(_PrimMode primMode) const = 0;
 
 private:
     bool _isInitialized;
@@ -63,14 +79,15 @@ private:
     uint  _numVertices;
     uint * _indices;
     uint  _numIndices;
-
+    QString _texturePath;
+    
     // If one of these two are set, and _ApplyTexture() returns true, we'll use
     // the texture. _textureId is used if we create the texture through some
     // other means, like the QOpenGLFramebufferObject. Otherwise, we'll pass in
     // a path that the texture object can use to create a QOpenGLTexture
     // instance.
     GLuint _textureId;
-    //    QOpenGLTextureSharedPtr _texture;
+    QOpenGLTextureSharedPtr _texture;
 
     // Passed in in Initialize as this, so it's "safe".
     FQGLScene * _scene;

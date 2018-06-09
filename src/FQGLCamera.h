@@ -76,7 +76,7 @@ protected:
     virtual void _CreateGeometry(FQGLPrimVertex **vertices,
                                  uint &numVertices) override;    
 
-    virtual GLenum _GetDrawMode() const override;
+    virtual GLenum _GetDrawMode(FQGLPrim::_PrimMode primMode) const override;
 
     struct _PerspectiveProps
     {

@@ -15,6 +15,7 @@ uniform vec2 texOffset;
 void main()
 {
     vColor = aColor;
-    vTexCoords = aTexCoords + texOffset;
+    //vTexCoords = aTexCoords + texOffset;
+    vTexCoords = aTexCoords;
     gl_Position = projection * view * model * vec4(aPos, 1.0);
 }

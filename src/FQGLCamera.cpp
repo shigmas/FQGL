@@ -169,7 +169,8 @@ FQGLCamera::_CreateGeometry(FQGLPrimVertex **vertices,
 }
 
 GLenum
-FQGLCamera::_GetDrawMode() const
+FQGLCamera::_GetDrawMode(FQGLPrim::_PrimMode primMode) const
 {
+    Q_UNUSED(primMode);
     return GL_TRIANGLES;
 }

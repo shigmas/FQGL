@@ -14,7 +14,7 @@ protected:
     virtual void _CreateIndices(GLuint **indices,
                                 uint &numIndices) override;
 
-    GLenum _GetDrawMode() const override;
+    GLenum _GetDrawMode(FQGLPrim::_PrimMode primMode) const override;
 
 private:
     float _length;

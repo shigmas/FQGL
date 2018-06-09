@@ -11,31 +11,8 @@
 #include <algorithm>
 
 FQGLScene::FQGLScene(int width, int height) :
-    _basicShader(NULL,
-                 [] (QOpenGLShaderProgram *prog) {
-                     qDebug() << "Custom deleter for QOpenGLShaderProgram";
-                     if (prog) {
-                         prog->release();
-                         delete prog;
-                     } else {
-                         qDebug() << "_basicShader is NULL";
-                     }
-                 }),
-    _textureShader(NULL,
-                 [] (QOpenGLShaderProgram *prog) {
-                       qDebug() << "Custom deleter for QOpenGLShaderProgram";
-                       if (prog) {
-                         prog->release();
-                         delete prog;
-                       } else {
-                           qDebug() << "_textureShader is NULL";
-                       }
-                   }),
-    //_camera(new FQGLCamera(QVector3D(0.0f, 0.0f, 3.0f)))
-    _camera(new FQGLCamera(QVector3D(0.0f, 0.0f, 3.0f)),
-            [] (FQGLCamera *) {
-                qDebug() << "Custom deleter for FQGLCamera";
-            })
+    _camera(std::make_shared<FQGLCamera>(QVector3D(0.0f, 0.0f, 3.0f))),
+    _currentTextureUnit(0)
 {
     if (width && height) {
         _camera->SetPerspective(width, height, 45.0f, 0.1f, 100.0f);
@@ -48,11 +25,7 @@ FQGLScene::FQGLScene(int width, int height) :
 FQGLScene::FQGLScene(const char * vertexShader,
                      const char * basicShader,
                      const char * textureShader) :
-    _basicShader(NULL),
-    _textureShader(NULL),
-    _camera(new FQGLCamera(QVector3D(0.0f, 0.0f, 3.0f)))
-    // _camera(new FQGLCamera(QVector3D(0.0f, 0.0f, 3.0f)),
-    //         std::default_delete<FQGLCamera>())
+    _camera(std::make_shared<FQGLCamera>(QVector3D(0.0f, 0.0f, 3.0f)))
 {
     _shaders[0] = vertexShader;
     _shaders[1] = basicShader;
@@ -87,16 +60,19 @@ FQGLScene::Initialize()
 {
     initializeOpenGLFunctions();
 
-    QOpenGLShaderProgram * basic = InitShaders(_shaders[0], _shaders[1]);
+    QOpenGLShaderProgramSharedPtr basic = InitShaders(_shaders[0], _shaders[1]);
     if (basic) {
-        _basicShader = QOpenGLShaderProgramSharedPtr(basic);
+        _basicShader = basic;
     } else {
         qDebug() << "Unable to link basic shader";
     }
 
-    QOpenGLShaderProgram * tex = InitShaders(_shaders[0], _shaders[2]);
+    QOpenGLShaderProgramSharedPtr tex = InitShaders(_shaders[0], _shaders[2]);
     if (tex) {
-        _textureShader = QOpenGLShaderProgramSharedPtr(tex);
+        tex->bind();
+        _textureShader = tex;
+        
+        tex->setUniformValue("texture1",GL_TEXTURE0);
     } else {
         qDebug() << "Unable to link texture shader";
     }
@@ -118,9 +94,9 @@ FQGLScene::AddPrim(const FQGLPrimSharedPtr& prim, bool asStencilPrim)
 }
 
 QOpenGLShaderProgramSharedPtr
-FQGLScene::GetShader(bool basicShader) const
+FQGLScene::GetShader(bool getTexShader) const
 {
-    return basicShader ? _basicShader : _textureShader;
+    return getTexShader ? _textureShader : _basicShader;
 }
 
 void
@@ -145,6 +121,7 @@ FQGLScene::Render(const QVector4D& clearColor,
     _textureShader->setUniformValue("view", _camera->GetViewMatrix());
     _textureShader->setUniformValue("projection",
                                     _camera->GetProjectionMatrix());
+    _textureShader->setUniformValue("texture1", 0);
 
     // Always draw stencil prims first. Definitely makes a difference in the
     // testing case.
@@ -163,6 +140,7 @@ FQGLScene::Render(const QVector4D& clearColor,
         // Either GL_NOTEQUAL or GL_GREATER work for this
         glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
     }
+
     std::for_each(_prims.cbegin(), _prims.cend(),
                   [this, frameBufferType] (const FQGLPrimSharedPtr &prim) {
                       bool doTest = frameBufferType == FQGLPickingFramebufferType;
@@ -171,24 +149,44 @@ FQGLScene::Render(const QVector4D& clearColor,
                           qDebug() << "Passed: " << didPass;
                       }
                   });
-
-
 }
 
-QVector3D
-FQGLScene::GetCameraScreenPoint(const QVector2D& screenPoint) const
+QVector2D
+FQGLScene::GetScreenPointFromNDC(const QVector3D& ndcPoint) const
 {
     FQGLFrustum frustum = _camera->GetFrustum();
 
-    return frustum.GetPointInFrustum(_camera->GetUp(), screenPoint,
-                                     _camera->GetAspectRatio());
+    return frustum.NDCPointToScreen(_camera->GetUp(),
+                                    _camera->GetAspectRatio(), ndcPoint);
 }
 
-QOpenGLShaderProgram *
+QVector3D
+FQGLScene::GetNDCPointFromScreen(const QVector2D& screenPoint) const
+{
+    FQGLFrustum frustum = _camera->GetFrustum();
+
+    return frustum.ScreenPointToFrustum(_camera->GetUp(), screenPoint,
+                                        _camera->GetAspectRatio());
+}
+
+uint
+FQGLScene::GetNextTextureBindingUnit()
+{
+    return _currentTextureUnit++;
+}
+
+uint
+FQGLScene::GetCurrentTextureBindingUnit() const
+{
+    return _currentTextureUnit;
+}
+
+QOpenGLShaderProgramSharedPtr
 FQGLScene::InitShaders(const char * vshader,
                        const char * fshader)
 {
-    QOpenGLShaderProgram *program = new QOpenGLShaderProgram;
+    QOpenGLShaderProgramSharedPtr program =
+        std::make_shared<QOpenGLShaderProgram>();
 
     if (!program->addShaderFromSourceFile(QOpenGLShader::Vertex,
                                           vshader)) {

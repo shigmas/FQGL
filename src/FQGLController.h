@@ -28,6 +28,8 @@ public:
 
     void ReceivedTap(const QVector2D& location, TapType tapType) const;
 
+    void PreRenderComplete();
+
     void RenderComplete();
 
 protected:

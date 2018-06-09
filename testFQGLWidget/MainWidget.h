@@ -8,9 +8,8 @@ class QLabel;
 class QLineEdit;
 class QVBoxLayout;
 
-FQGL_DECLARE_PTRS(LoupePrim);
-FQGL_DECLARE_PTRS(CubePrim);
 FQGL_DECLARE_PTRS(FQGLController);
+FQGL_DECLARE_PTRS(FQGLPrim);
 FQGL_DECLARE_PTRS(FQGLWidget);
 
 class MainWidget : public QWidget,
@@ -24,6 +23,8 @@ public:
 
     virtual void HandleSingleTap(const QVector2D& location) override;
     virtual void HandleRightTap(const QVector2D& location) override;
+
+    virtual void OnPreRenderComplete() override;
 
     virtual void OnRenderComplete() override;
 
@@ -40,8 +41,8 @@ private:
     QLineEdit * _text;
     FQGLWidgetSharedPtr _widget;
 
-    LoupePrimSharedPtr _loupe;
-    CubePrimSharedPtr _cube;
+    FQGLPrimSharedPtr _loupe;
+    FQGLPrimSharedPtr _cube;
 
     FQGLControllerSharedPtr _controller;
 };

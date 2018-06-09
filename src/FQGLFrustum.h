@@ -59,13 +59,32 @@ public:
     FQGLFrustum GetPickFrustum(const QVector2D& pickPoint,
                                const float& pickSize);
 
-    // We do this quite a bit internally, from the internal points, but this
-    // takes coordinates in the frustum coordinate. The default distance is the
+    // These two functions are very similar, but different enough (I think) to
+    // have two functions. As the API gets fleshed out, we might start putting
+    // the math into a helper.
+
+    // Returns a point in the frustum along the vector formed from the camera
+    // location to the \p point in the plane formed at \p depth along the
+    // camera location to the lookAt point. In short, a point which would be
+    // identically rendered given the projection. Default depth is 0 (in the
     // near plane.
-    QVector3D GetPointInFrustum(const QVector3D& cameraUp,
-                                const QVector2D& screenPoint,
-                                const float& aspect,
-                                const float& distance = -1.0f) const;
+    // XXX - this is broken.
+    QVector3D ConvertFrustumPoint(const QVector3D& cameraUp,
+                                  const float& aspect,
+                                  const QVector3D& point,
+                                  const float& depth = 0.0f) const;
+
+    QVector2D NDCPointToScreen(const QVector3D& cameraUp,
+                               const float& aspect,
+                               const QVector3D& point) const;
+
+    // Takes a screen point and returns its equivalent point in the frustum's
+    // near plane.
+    // Note: To be visible, the return value may have to be slightly extended
+    // to be slightly inside the frustum.
+    QVector3D ScreenPointToFrustum(const QVector3D& cameraUp,
+                                   const QVector2D& screenPoint,
+                                   const float& aspect) const;
     
     // Testing for pick
     bool IsPointInFrustum(const QVector3D& point,
@@ -96,7 +115,11 @@ protected:
     FQGLFrustum(QVector3D * points, FQGLPlane *planes,
                 FrustumType frustumType);
 
-    float _GetHeightFromDistance(const float& near, const float& fov) const;
+    QVector2D _GetScreenPointFromNDC(const QVector3D& cameraUp,
+                                     const float& aspect,
+                                     const QVector3D& point) const;
+
+    float _GetHeightFromDistance(const float& dist, const float& fov) const;
 
     QVector3D _GetDirectionNormal(const QVector3D& position,
                                   const QVector3D& lookAt) const;

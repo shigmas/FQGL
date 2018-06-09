@@ -47,26 +47,28 @@ CubePrim::_CreateIndices(GLuint **indices, uint &numIndices)
     numIndices = 14;
     GLuint* inds = new uint[14];
 
-    inds[0] = 7;
-    inds[1] = 6;
+    inds[0] = 5;
+    inds[1] = 7;
     inds[2] = 4;
-    inds[3] = 5;
-    inds[4] = 1;
-    inds[5] = 6;
-    inds[6] = 7;
-    inds[7] = 3;
+    inds[3] = 6;
+    inds[4] = 2;
+    inds[5] = 7;
+    inds[6] = 5;
+    inds[7] = 1;
     inds[8] = 4;
     inds[9] = 0;
-    inds[10] = 1;
-    inds[11] = 3;
-    inds[12] = 2;
-    inds[13] = 7;
+    inds[10] = 2;
+    inds[11] = 1;
+    inds[12] = 3;
+    inds[13] = 5;
 
     *indices = inds;
 }
 
 GLenum
-CubePrim::_GetDrawMode() const
+CubePrim::_GetDrawMode(FQGLPrim::_PrimMode primMode) const
 {
+    Q_UNUSED(primMode);
+
     return GL_TRIANGLE_STRIP;
 }

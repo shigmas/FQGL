@@ -1,22 +1,24 @@
 #include "FQGLPrim.h"
 
 // This has to be a screen space prim. But it's not, for now.
-class LoupePrim : public FQGLPrim
+class SquareLoupePrim : public FQGLPrim
 {
 public:
-    LoupePrim(float radius, int numSamples, float magnification,
-              const QVector4D& color);
-    virtual ~LoupePrim();
+    SquareLoupePrim(float length, float magnification,
+                    const QVector4D& color);
+    virtual ~SquareLoupePrim();
 
 protected:
     virtual void _CreateGeometry(FQGLPrimVertex **vertices,
                                  uint &numVertices) override;
 
+    virtual void _CreateIndices(GLuint **indices,
+                                uint &numIndices) override;
+
     virtual GLenum _GetDrawMode(FQGLPrim::_PrimMode primMode) const override;
 
 private:
-    float _radius;
-    int _numSamples;
+    float _length;
     float _magnification;
     QVector4D _color;
 };

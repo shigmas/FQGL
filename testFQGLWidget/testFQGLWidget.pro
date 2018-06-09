@@ -10,18 +10,20 @@ CONFIG -= app_bundle
 SOURCES += main.cpp
 
 SOURCES += \
+    SquareLoupePrim.cpp \
     LoupePrim.cpp \
     CubePrim.cpp \
     MainWidget.cpp \
 
 HEADERS += \
+    SquareLoupePrim.h \
     LoupePrim.h \
     CubePrim.h \
     MainWidget.h \
 
 RESOURCES += \
     shaders.qrc \
-#    textures.qrc \
+    textures.qrc \
 
 # install
 target.path = $$[QT_INSTALL_EXAMPLES]/opengl/cube

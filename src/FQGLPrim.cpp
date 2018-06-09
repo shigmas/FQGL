@@ -13,9 +13,7 @@ FQGLPrim::FQGLPrim() :
     _isInitialized(false),
     _vertices(NULL),
     _indices(NULL),
-    _textureId(0),
-    //_texture(NULL),
-    _primShader(NULL)
+    _textureId(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS)
 {
 }
 
@@ -37,7 +35,11 @@ FQGLPrim::Initialize(FQGLScene * scene)
     _scene = scene;
     initializeOpenGLFunctions();
 
-    _vao = QOpenGLVertexArrayObjectSharedPtr(new QOpenGLVertexArrayObject());
+    if (_texturePath.size()) {
+        _texture = _InitializeTexture();
+    }
+
+    _vao = std::make_shared<QOpenGLVertexArrayObject>();
     _vao->create();
     _vao->bind();
 
@@ -45,8 +47,7 @@ FQGLPrim::Initialize(FQGLScene * scene)
     // the vertex buffer
     _CreateGeometry(&_vertices, _numVertices);
 
-    _vertexBuffer =
-        QOpenGLBufferSharedPtr(new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer));
+    _vertexBuffer = std::make_shared<QOpenGLBuffer>(QOpenGLBuffer::VertexBuffer);
     _vertexBuffer->create();
     _vertexBuffer->bind();
     _vertexBuffer->allocate(_vertices, _numVertices * sizeof(FQGLPrimVertex));
@@ -57,13 +58,14 @@ FQGLPrim::Initialize(FQGLScene * scene)
 
     if (_numIndices > 0) {
         _indexBuffer =
-            QOpenGLBufferSharedPtr(new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer));
+            std::make_shared<QOpenGLBuffer>(QOpenGLBuffer::IndexBuffer);
         _indexBuffer->create();
         _indexBuffer->bind();
         _indexBuffer->allocate(_indices, _numIndices * sizeof(GLuint));
     }
 
-    
+    //    _vao->release();
+
     QOpenGLShaderProgramSharedPtr shader =
         _primShader ? _primShader : _scene->GetShader();
 
@@ -96,11 +98,7 @@ FQGLPrim::SetTextureById(GLuint textureId)
 void
 FQGLPrim::SetTextureByResourcePath(const QString& path)
 {
-    // _texture = QOpenGLTextureSharedPtr(new QOpenGLTexture(QImage(path)));
-    // //_texture->bind(bindingUnit);
-    // _texture->setMinificationFilter(QOpenGLTexture::Linear);
-    // _texture->setMagnificationFilter(QOpenGLTexture::Linear);
-    // _texture->setWrapMode(QOpenGLTexture::ClampToEdge);
+    _texturePath = path;
 }
 
 void
@@ -108,28 +106,33 @@ FQGLPrim::Render()
 {
     _vao->bind();
 
-    bool isTexSet = false;
-    uint textureUnit = 1;
-    if (_textureId) {
-        glBindTexture(GL_TEXTURE_2D, _textureId);
-        glActiveTexture(textureUnit);
-        isTexSet = true;
-    // } else if (_texture) {
-    //     _texture->bind(textureUnit);
-    //     isTexSet = true;
-    }
+    bool hasTex = (_textureId != GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS) ||
+        _texture;
 
-    // XXX - If we're using our own shader, the view or projection uniforms
-    // haven't been set
+    // XXX - If we're the prim's shader, the view or projection uniforms
+    // haven't been set. So, fix that if we use _primShader.
     QOpenGLShaderProgramSharedPtr shader =
-        _primShader ? _primShader : _scene->GetShader(!isTexSet);
+        _primShader ? _primShader : _scene->GetShader(hasTex);
     shader->bind();
 
-    shader->setUniformValue("texture1", textureUnit);
+    if (_textureId != GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS) {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, _textureId);
+    } else if (_texture) {
+        //_texture->bind(GL_TEXTURE0);
+        _texture->bind(0);
+    }
+
+    //shader->setUniformValue("texture1", GL_TEXTURE0);
     shader->setUniformValue("model", _transform);
     shader->setUniformValue("texOffset", _textureOffset);
-    GLsizei numDrawVerts = _numIndices ? _numIndices : _numVertices;
-    glDrawArrays(_GetDrawMode(), 0, numDrawVerts);
+    if (_numIndices) {
+        glDrawElements(_GetDrawMode(WireFramePrimMode), _numIndices,
+                       GL_UNSIGNED_INT, 0);
+    } else {
+        glDrawArrays(_GetDrawMode(WireFramePrimMode), 0, _numVertices);
+    }
+    _vao->release();
 }
 
 void
@@ -150,6 +153,38 @@ FQGLPrim::SetTranslate(const QVector3D& translate)
     QMatrix4x4 mat;
     mat.translate(translate);
     SetTransform(mat);
+}
+
+QVector3D
+FQGLPrim::_GetScreenPointFromNDCPoint(const QVector3D& ndc) const
+{
+    return _scene->GetScreenPointFromNDC(ndc);
+}
+
+QVector3D
+FQGLPrim::_GetNDCPointFromScreenPoint(const QVector2D& screen) const
+{
+    return _scene->GetNDCPointFromScreen(screen);
+}
+
+QVector2D
+FQGLPrim::_ScreenNdcToTex(const QVector3D& screen) const
+{
+    return QVector2D((screen.x() + 1.0f)/2.0f, (screen.y() + 1.0f)/2.0f);
+}
+ 
+QOpenGLTextureSharedPtr
+FQGLPrim::_InitializeTexture() const
+{
+    QOpenGLTextureSharedPtr tex =
+        std::make_shared<QOpenGLTexture>(QImage(_texturePath));
+    // XXX - I think this might work with a texture registry in the scene.
+    //_texture->bind(bindingUnit);
+    tex->setMinificationFilter(QOpenGLTexture::Linear);
+    tex->setMagnificationFilter(QOpenGLTexture::Linear);
+    tex->setWrapMode(QOpenGLTexture::ClampToEdge);
+
+    return tex;
 }
 
 void
