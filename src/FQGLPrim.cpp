@@ -9,15 +9,16 @@
 
 #include <QDebug>
 
-FQGLPrim::FQGLPrim() :
+FQGLPrim::FQGLPrim(FQGLPrimViewType viewType) :
     _isInitialized(false),
+    _viewType(viewType),
+    _isStencil(false),
     _vertices(NULL),
     _indices(NULL),
-    _textureId(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS)
+    _textureId(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS),
+    _texture(NULL)
 {
 }
-
-
 
 FQGLPrim::~FQGLPrim()
 {
@@ -27,6 +28,28 @@ FQGLPrim::~FQGLPrim()
      if (_indices) {
          delete [] _indices;
      }
+     if (_texture) {
+         //         _texture->destroy();
+         //delete _texture;
+     }
+}
+
+FQGLPrimViewType
+FQGLPrim::GetViewType() const
+{
+    return _viewType;
+}
+
+bool
+FQGLPrim::IsStencil() const
+{
+    return _isStencil;
+}
+
+void
+FQGLPrim::SetAsStencil(bool isStencil)
+{
+    _isStencil = isStencil;
 }
 
 void
@@ -125,7 +148,8 @@ FQGLPrim::Render()
 
     //shader->setUniformValue("texture1", GL_TEXTURE0);
     shader->setUniformValue("model", _transform);
-    shader->setUniformValue("texOffset", _textureOffset);
+    //shader->setUniformValue("texOffset", _textureOffset);
+    shader->setAttributeValue("texOffset", _textureOffset);
     if (_numIndices) {
         glDrawElements(_GetDrawMode(WireFramePrimMode), _numIndices,
                        GL_UNSIGNED_INT, 0);
@@ -155,29 +179,13 @@ FQGLPrim::SetTranslate(const QVector3D& translate)
     SetTransform(mat);
 }
 
-QVector3D
-FQGLPrim::_GetScreenPointFromNDCPoint(const QVector3D& ndc) const
-{
-    return _scene->GetScreenPointFromNDC(ndc);
-}
-
-QVector3D
-FQGLPrim::_GetNDCPointFromScreenPoint(const QVector2D& screen) const
-{
-    return _scene->GetNDCPointFromScreen(screen);
-}
-
-QVector2D
-FQGLPrim::_ScreenNdcToTex(const QVector3D& screen) const
-{
-    return QVector2D((screen.x() + 1.0f)/2.0f, (screen.y() + 1.0f)/2.0f);
-}
- 
-QOpenGLTextureSharedPtr
+//QOpenGLTextureSharedPtr
+QOpenGLTexture *
 FQGLPrim::_InitializeTexture() const
 {
-    QOpenGLTextureSharedPtr tex =
-        std::make_shared<QOpenGLTexture>(QImage(_texturePath));
+    // QOpenGLTextureSharedPtr tex =
+    //     std::make_shared<QOpenGLTexture>(QImage(_texturePath));
+    QOpenGLTexture * tex = new QOpenGLTexture(QImage(_texturePath));
     // XXX - I think this might work with a texture registry in the scene.
     //_texture->bind(bindingUnit);
     tex->setMinificationFilter(QOpenGLTexture::Linear);
@@ -186,6 +194,19 @@ FQGLPrim::_InitializeTexture() const
 
     return tex;
 }
+
+QVector2D
+FQGLPrim::_NDCToTex(const QVector2D& ndc) const
+{
+    return QVector2D((ndc.x() + 1.0f)/2.0f, (ndc.y() + 1.0f)/2.0f);
+}
+
+// QVector2D
+// FQGLPrim::_CoordinatesToTex(const QVector3D& screen) const
+// {
+//     return QVector2D((screen.x() + 1.0f)/2.0f, (screen.y() + 1.0f)/2.0f);
+// }
+
 
 void
 FQGLPrim::_CreateIndices(uint **indices, uint &numIndices)

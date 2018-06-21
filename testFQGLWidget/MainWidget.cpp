@@ -35,14 +35,28 @@ MainWidget::MainWidget(QWidget * parent) :
     _widget->SetScenePerspective(width(), height());
 
     QVector4D gray(.75, 0.25, 0.25, 1.0f);
-    _loupe = std::make_shared<SquareLoupePrim>(0.5, 1.5, gray);
+    _loupe = std::make_shared<SquareLoupePrim>(0.25, 1.2, gray);
     _loupe->SetTextureByResourcePath(":/resources/raideen.jpg");
-    _widget->AddPrimToScene(_loupe,true);
+    _widget->AddPrimToScene(_loupe);
 
-    QVector4D green(.1, 0.25, 0.75, 0.50);
-    _cube = std::make_shared<CubePrim>(0.35, green);
-    _cube->SetTranslate(QVector3D(0.0f, 0.0f, -.21f));
-    _widget->AddPrimToScene(_cube);
+    QVector4D green(.1, 0.25, 0.75, 0.20);
+    QVector4D blue(.1, 0.25, 0.25, 0.75);
+    QVector4D yellow(.200, 0.200, 0.0f, 0.75);
+    FQGLPrimSharedPtr cube;
+    cube = std::make_shared<CubePrim>(0.35, green);
+    cube->SetTranslate(QVector3D(0.3f, 0.0f, -.21f));
+    _cubes.push_back(cube);
+    _widget->AddPrimToScene(cube);
+
+    cube = std::make_shared<CubePrim>(0.35, blue);
+    cube->SetTranslate(QVector3D(-0.3f, 0.0f, -.21f));
+    _cubes.push_back(cube);
+    _widget->AddPrimToScene(cube);
+
+    cube = std::make_shared<CubePrim>(0.35, yellow);
+    cube->SetTranslate(QVector3D(0.0f, 0.33f, -.21f));
+    _cubes.push_back(cube);
+    _widget->AddPrimToScene(cube);
 }
 
 MainWidget::~MainWidget()
@@ -53,15 +67,12 @@ MainWidget::~MainWidget()
 void
 MainWidget::HandleSingleTap(const QVector2D& location)
 {
-    qDebug() << "Received (" << location.x() << ", " << location.y() << ")";
-
-    //QVector3D translateVec(location.x(), location.y(), 0.0f);
-    QVector3D translateVec = _widget->ToScenePoint(location);
-    QMatrix4x4 translateMat;
-    translateMat.translate(translateVec);
+    QVector3D translateVec = _widget->ScreenToCoordinates(location);
+    //qDebug() << "Tap: " << location << "in scene: " << translateVec;
     _widget->EnableTextureBuffer();
-    _loupe->SetTransform(translateMat);
-    _loupe->SetTextureOffset(_widget->ToTexPoint(location));
+    _loupe->SetTranslate(translateVec);
+    // Drop the Z.
+    _loupe->SetTextureOffset(_widget->ScreenToCoordinates(location));
 }
 
 void
@@ -75,13 +86,12 @@ MainWidget::HandleRightTap(const QVector2D& location)
     translateMat.translate(translateVec);
     _widget->EnablePickTestingBuffer();
     _loupe->SetTransform(translateMat);
-    _loupe->SetTextureOffset(_widget->ToTexPoint(location));
+    //_loupe->SetTextureOffset(_widget->ToTexPoint(location));
 }
 
 void
 MainWidget::OnPreRenderComplete()
 {
-    qDebug() << "PreRender complete";
     GLuint texId = _widget->GetTextureIdFromLastRender();
     if (_widget->IsTextureBufferEnabled() &&
         (texId != GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS)) {
@@ -92,7 +102,6 @@ MainWidget::OnPreRenderComplete()
 void
 MainWidget::OnRenderComplete()
 {
-    qDebug() << "Render complete";
     _widget->DisablePickTestingBuffer();
     _widget->DisableTextureBuffer();
 }
@@ -116,8 +125,8 @@ MainWidget::_SetLayout()
 
     _bottomLayout = new QHBoxLayout();
 
-     FQGLWidget *widget = new FQGLWidget(_controller);
-     _widget = FQGLWidgetSharedPtr(widget);
+    FQGLWidget *widget = new FQGLWidget(_controller);
+    _widget = FQGLWidgetSharedPtr(widget);
     _controller->SetWidget(_widget);
 
     _widget->resize(width(), .9*height());

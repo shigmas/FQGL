@@ -1,6 +1,12 @@
 #include "FQGLPrim.h"
 
-// This has to be a screen space prim. But it's not, for now.
+// The loupe exists as a screen space prim. It magnifies the scene behind it
+// but isn't actually part of the scene. And, while this is an implementation
+// detail, we render the visible part of the screen as a texture, which has to
+// be in screen coordinates.
+//
+// Screen space prims are in the (-1,-1) to (1,1) space. They'll get translated
+// to be visible in 3D space.
 class SquareLoupePrim : public FQGLPrim
 {
 public:

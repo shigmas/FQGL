@@ -1,27 +1,24 @@
-QT       += core gui widgets opengl
+QT       += opengl testlib
+
+QT       -= gui
 
 QMAKE_CXXFLAGS += -g
 
-TARGET = testFQGLWidget
+TARGET = testFQGLFrustumCompute
+
 TEMPLATE = app
 
+CONFIG += console
 CONFIG -= app_bundle
 
-SOURCES += main.cpp
+SOURCES += \
 
 SOURCES += \
-    SquareLoupePrim.cpp \
-    CubePrim.cpp \
-    MainWidget.cpp \
+        FQGLFrustumComputeTest.cpp \
 
 HEADERS += \
-    SquareLoupePrim.h \
-    CubePrim.h \
-    MainWidget.h \
+        FQGLFrustumComputeTest.h \
 
-RESOURCES += \
-    shaders.qrc \
-    textures.qrc \
 
 # install
 target.path = $$[QT_INSTALL_EXAMPLES]/opengl/cube
@@ -59,4 +56,4 @@ ios {
     LIBS += -L$${fqgl_dir} -l FQGL
 
     INCLUDEPATH += $${fqgl_src_dir}/
-}        
+}

@@ -51,6 +51,7 @@ FQGLWidget::FQGLWidget(FQGLControllerPtr controller,
 
 FQGLWidget::~FQGLWidget()
 {
+    makeCurrent();
     qDebug() << "~FQGLWidget";
 }
 
@@ -69,10 +70,9 @@ FQGLWidget::SetScenePerspective(int width, int height)
 }
 
 void
-FQGLWidget::AddPrimToScene(const FQGLPrimSharedPtr& prim,
-                           bool asStencilPrim)
+FQGLWidget::AddPrimToScene(const FQGLPrimSharedPtr& prim)
 {
-    _scene->AddPrim(prim, asStencilPrim);
+    _scene->AddPrim(prim);
 }
 
 bool
@@ -168,17 +168,20 @@ FQGLWidget::GetTextureIdFromLastRender()
     return texId;
 }
 
-
 QVector3D
-FQGLWidget::ToScenePoint(const QVector2D& ndcPoint) const
+FQGLWidget::ToScenePoint(const QVector2D& screenPoint,
+                         const float& depth) const
 {
-    return _scene->GetNDCPointFromScreen(ndcPoint);
+    return _scene->GetNDCPointFromScreen(screenPoint, depth);
 }
 
 QVector2D
-FQGLWidget::ToTexPoint(const QVector2D& ndcPoint) const
+FQGLWidget::ScreenToCoordinates(const QVector2D& screen,
+                                bool invertY) const
 {
-    return QVector2D((ndcPoint.x() + 1.0)/2.0f, (ndcPoint.y() + 1.0)/2.0f);
+    float invert = invertY ? -1.0f : 1.0f;
+    return QVector2D(invert*screen.x() * 2.0f - 1.0f,
+                     invert*screen.y() * 2.0f - 1.0f);
 }
 
 void
@@ -198,6 +201,7 @@ FQGLWidget::initializeGL()
 void
 FQGLWidget::resizeGL(int w, int h)
 {
+    qDebug() << "resizeGL(" << w << ", " << h << ")";
     _scene->SetPerspective(w, h);
     update();
 }
@@ -206,9 +210,11 @@ void::
 FQGLWidget::paintGL()
 {
     bool didPreRender = false;
+    glDisable(GL_DEPTH_TEST);
     for (int i = 0 ; i < FQGL_NUM_FRAMEBUFFERS ; ++i) {
         if (_framebuffers[i].second) {
             _framebuffers[i].first->bind();
+            _scene->Render(_clearColor, (FQGLFramebufferType) i);
             _scene->Render(_clearColor, (FQGLFramebufferType) i);
             didPreRender = true;
             if (i == FQGLTextureFramebufferType) {
@@ -222,7 +228,8 @@ FQGLWidget::paintGL()
     }
     
     QOpenGLFramebufferObject::bindDefault();
-    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
+    _scene->Render(_clearColor, FQGLDefaultFramebufferType);
     _scene->Render(_clearColor, FQGLDefaultFramebufferType);
 
     if (ctrlr) {
@@ -277,11 +284,10 @@ FQGLWidget::mousePressEvent(QMouseEvent *event)
         tapType = FQGLController::LeftTapType;
     }
     
-    QVector2D ndcPoint = _ToNDC(event->x(), event->y());
     // Just testing the flow for now. This needs to get translated from the
     // screen to the camera.
     if (FQGLControllerSharedPtr ctrlr = FQGLControllerSharedPtr(_controller)) {
-        ctrlr->ReceivedTap(ndcPoint, tapType);
+        ctrlr->ReceivedTap(_ToScreen(event->x(), event->y()), tapType);
     }
 
     update();
@@ -331,4 +337,12 @@ FQGLWidget::_ToNDC(const int& x, const int& y) const
     float ndcY = (-y + mid)/mid;
 
     return QVector2D(ndcX, ndcY);
+}
+
+QVector2D
+FQGLWidget::_ToScreen(const int& x, const int& y) const
+{
+    // Since 0,0 is the top left corner, we need to flip the y
+    return QVector2D(float(x)/float(width()),
+                     float(height() - y)/float(height()));
 }

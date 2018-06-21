@@ -2,6 +2,7 @@
 #include "FQGLResponder.h"
 #include "FQGLTypes.h"
 
+#include <vector>
 class QGridLayout;
 class QHBoxLayout;
 class QLabel;
@@ -42,7 +43,7 @@ private:
     FQGLWidgetSharedPtr _widget;
 
     FQGLPrimSharedPtr _loupe;
-    FQGLPrimSharedPtr _cube;
+    std::vector<FQGLPrimSharedPtr> _cubes;
 
     FQGLControllerSharedPtr _controller;
 };

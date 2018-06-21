@@ -35,6 +35,7 @@ HEADERS += \
 SOURCES += \
         ../src/FQGLCamera.cpp \
         ../src/FQGLController.cpp \
+        ../src/FQGLFrustumCompute.cpp \
         ../src/FQGLFrustum.cpp \
         ../src/FQGLPlane.cpp \
         ../src/FQGLPrim.cpp \
@@ -45,6 +46,7 @@ SOURCES += \
 HEADERS += \
         ../src/FQGLCamera.h \
         ../src/FQGLController.h \
+        ../src/FQGLFrustumCompute.h \
         ../src/FQGLFrustum.h \
         ../src/FQGLPlane.h \
         ../src/FQGLPrim.h \

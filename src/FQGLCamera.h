@@ -86,7 +86,7 @@ protected:
         _PerspectiveProps(float width, float height, float fov,
                           float nearPlane, float farPlane) :
             initialized(true),
-            aspectRatio(-1.0f),
+            aspectRatio(width/height),
             width(width),
             height(height),
             fov(fov),

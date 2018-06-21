@@ -13,8 +13,15 @@ template <typename T> struct FQGLDeclarePtrs {
     class type;                  \
     typedef FQGLDeclarePtrs<class type>::SharedPtr  type##SharedPtr; \
     typedef FQGLDeclarePtrs<class type>::Ptr        type##Ptr;
-    
+
+enum FQGLPrimViewType {
+    // It's still part of the scene, but drawn in the screen
+    FQGLScreenViewType,
+    FQGLSceneViewType
+};
+
 #define FQGL_NUM_FRAMEBUFFERS 3
+
 enum FQGLFramebufferType {
     FQGLTextureFramebufferType = 0,
     FQGLPickingFramebufferType = 1,

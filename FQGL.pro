@@ -7,6 +7,6 @@
 TEMPLATE = subdirs
 
 #!contains(DEFINES, DISABLE_FFT): SUBDIRS += 
-SUBDIRS += lib testFQGLWidget
+SUBDIRS += lib testFQGLFrustumCompute testFQGLFrustum testFQGLWidget
 
 TARGET = FQGL

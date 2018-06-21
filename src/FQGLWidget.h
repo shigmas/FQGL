@@ -41,8 +41,7 @@ public:
 
     void SetScenePerspective(int width, int height);
 
-    void AddPrimToScene(const FQGLPrimSharedPtr& prim,
-                        bool asStencilPrim=false);
+    void AddPrimToScene(const FQGLPrimSharedPtr& primt);
 
     bool EnableTextureBuffer();
 
@@ -58,10 +57,16 @@ public:
 
     GLuint GetTextureIdFromLastRender();
 
-    QVector3D ToScenePoint(const QVector2D& ndcPoint) const;
+    // Converts the screen point to a point in the scene. By default, it will
+    // be the near plane.
+    QVector3D ToScenePoint(const QVector2D& screenPoint,
+                           const float& depth=-1.0f) const;
+    
+    // For want of a better name, coordinate is the (-1,-1) to (1,1)
+    QVector2D ScreenToCoordinates(const QVector2D& screenPoint,
+                                  bool invertY = false) const;
 
-    QVector2D ToTexPoint(const QVector2D& ndcPoint) const;
-
+    
 protected:
     // QOpenGLWidget and QWidget overrides
     virtual void initializeGL() override;
@@ -80,6 +85,8 @@ protected:
     bool _HandleGesture(QGestureEvent *event);
 
     QVector2D _ToNDC(const int& x, const int& y) const;
+
+    QVector2D _ToScreen(const int& x, const int& y) const;
 
 private:
     FQGLControllerPtr _controller;

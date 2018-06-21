@@ -26,8 +26,13 @@ FQGL_DECLARE_PTRS(QOpenGLVertexArrayObject);
 class FQGLPrim : protected QOpenGLFunctions
 {
 public:
-    FQGLPrim();
+    FQGLPrim(FQGLPrimViewType viewType=FQGLSceneViewType);
     virtual ~FQGLPrim();
+
+    FQGLPrimViewType GetViewType() const;
+
+    bool IsStencil() const;
+    void SetAsStencil(bool isStencil);
 
     virtual void Initialize(FQGLScene * scene);
 
@@ -50,14 +55,16 @@ protected:
         WireFramePrimMode,
         TexturePrimMode,
     };
-    // Helper functions for subclasses
-    QVector3D _GetScreenPointFromNDCPoint(const QVector3D& ndc) const;
-    QVector3D _GetNDCPointFromScreenPoint(const QVector2D& screen) const;
 
-    // Just drop the z, and convert to NDC space to texture space
-    QVector2D _ScreenNdcToTex(const QVector3D& screen) const;
-    
-    QOpenGLTextureSharedPtr _InitializeTexture() const;
+    // -------
+    // Helper functions for subclasses
+
+    //QOpenGLTextureSharedPtr _InitializeTexture() const;
+    QOpenGLTexture * _InitializeTexture() const;
+
+    // Textures are from TopLeft (0,0) to Bottom Right (1,1), So, take an NDC
+    // point and map it to a texture point.
+    QVector2D _NDCToTex(const QVector2D& ndc) const;
 
     // This function allocates the vertices, and sets numVertices. This is
     // called by Initialize, so the scene is set, if we need it to transform
@@ -75,6 +82,9 @@ protected:
 
 private:
     bool _isInitialized;
+    FQGLPrimViewType _viewType;
+    bool _isStencil;
+    QVector3D _center;
     FQGLPrimVertex * _vertices;
     uint  _numVertices;
     uint * _indices;
@@ -87,7 +97,8 @@ private:
     // a path that the texture object can use to create a QOpenGLTexture
     // instance.
     GLuint _textureId;
-    QOpenGLTextureSharedPtr _texture;
+    //QOpenGLTextureSharedPtr _texture;
+    QOpenGLTexture * _texture;
 
     // Passed in in Initialize as this, so it's "safe".
     FQGLScene * _scene;

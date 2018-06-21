@@ -10,12 +10,39 @@
 
 #include <algorithm>
 
+FQGLScene::_PrimRenderState::_PrimRenderState(bool isStencil,
+                                              QOpenGLFunctions* functions) :
+    _isStencil(isStencil),
+    _functions(functions)
+{
+    if (_isStencil) {
+        _functions->glStencilMask(0xFF);
+        _functions->glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    }
+}
+
+FQGLScene::_PrimRenderState::~_PrimRenderState()
+{
+    if (_isStencil) {
+        _functions->glStencilMask(0x00);
+        // Either GL_NOTEQUAL or GL_GREATER work for this
+        _functions->glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    }
+}
+
 FQGLScene::FQGLScene(int width, int height) :
     _camera(std::make_shared<FQGLCamera>(QVector3D(0.0f, 0.0f, 3.0f))),
+    _screenSpaceCamera(std::make_shared<FQGLCamera>(QVector3D(0.0f, 0.0f, 3.0f))),
+    _fov(45.0f),
+    _nearPlane(0.1f),
+    _farPlane(100.0f),
     _currentTextureUnit(0)
 {
     if (width && height) {
-        _camera->SetPerspective(width, height, 45.0f, 0.1f, 100.0f);
+        _camera->SetPerspective(width, height, _fov, _nearPlane, _farPlane);
+        // Essentially, the same 
+        _screenSpaceCamera->SetOrthographic(-1.0f, 1.0f, -1.0f, 1.0f,
+                                            _nearPlane, _farPlane);
     }        
     for (int i = 0 ; i < 6 ; ++i) {
         _shaders[i] = NULL;
@@ -25,8 +52,13 @@ FQGLScene::FQGLScene(int width, int height) :
 FQGLScene::FQGLScene(const char * vertexShader,
                      const char * basicShader,
                      const char * textureShader) :
-    _camera(std::make_shared<FQGLCamera>(QVector3D(0.0f, 0.0f, 3.0f)))
+    _camera(std::make_shared<FQGLCamera>(QVector3D(0.0f, 0.0f, 3.0f))),
+    _screenSpaceCamera(std::make_shared<FQGLCamera>(QVector3D(0.0f, 0.0f, 3.0f)))
 {
+    // We can't set the perspective camera yet, but we can still set
+    // the orthographic.
+    _screenSpaceCamera->SetOrthographic(-1.0f, 1.0f, -1.0f, 1.0f,
+                                        _nearPlane, _farPlane);
     _shaders[0] = vertexShader;
     _shaders[1] = basicShader;
     _shaders[2] = textureShader;
@@ -40,9 +72,8 @@ FQGLScene::~FQGLScene()
 void
 FQGLScene::SetPerspective(int width, int height)
 {
-    float aspect = fabs(width/height);
-    //    _camera->SetPerspective(width, height, 45.0f, 0.1f, 100.0f);
-    _camera->SetPerspective(aspect, 45.0f, 0.1f, 100.0f);
+    _camera->SetPerspective(width, height, _fov, _nearPlane, _farPlane);
+    //_camera->SetPerspective(aspect, 45.0f, 0.1f, 100.0f);
 }
 
 void
@@ -84,10 +115,12 @@ FQGLScene::Initialize()
 }
 
 void
-FQGLScene::AddPrim(const FQGLPrimSharedPtr& prim, bool asStencilPrim)
+FQGLScene::AddPrim(const FQGLPrimSharedPtr& prim)
 {
-    if (asStencilPrim) {
-        _stencilPrims.push_back(prim);
+    // Sort them now. View type is set on construction, so we don't have to
+    // worry about it changing
+    if (prim->GetViewType() == FQGLScreenViewType) {
+        _screenSpacePrims.push_back(prim);
     } else {
         _prims.push_back(prim);
     }
@@ -103,6 +136,8 @@ void
 FQGLScene::Render(const QVector4D& clearColor,
                   FQGLFramebufferType frameBufferType)
 {
+    // If the prim has a shader, we should get it and set our variables here.
+    _SetupShaders(_screenSpaceCamera);
     GLbitfield clearBits = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT;
     if (frameBufferType != FQGLDefaultFramebufferType) {
         // Let's clear the stencil too
@@ -112,39 +147,20 @@ FQGLScene::Render(const QVector4D& clearColor,
                  clearColor.z());
     glClear(clearBits);
 
-    // If the prim has a shader, we should get it and set our variables here.
-    _basicShader->bind();
-    _basicShader->setUniformValue("view", _camera->GetViewMatrix());
-    _basicShader->setUniformValue("projection",
-                                  _camera->GetProjectionMatrix());
-    _textureShader->bind();
-    _textureShader->setUniformValue("view", _camera->GetViewMatrix());
-    _textureShader->setUniformValue("projection",
-                                    _camera->GetProjectionMatrix());
-    _textureShader->setUniformValue("texture1", 0);
-
-    // Always draw stencil prims first. Definitely makes a difference in the
-    // testing case.
-    if (frameBufferType != FQGLDefaultFramebufferType) {
-        glStencilMask(0xFF);
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-    }
-    std::for_each(_stencilPrims.cbegin(), _stencilPrims.cend(),
+    std::for_each(_screenSpacePrims.cbegin(), _screenSpacePrims.cend(),
                   [this] (const FQGLPrimSharedPtr &prim) {
                       _RenderPrim(prim, false);
                   });
 
-
-    if (frameBufferType != FQGLDefaultFramebufferType) {
-        glStencilMask(0x00);
-        // Either GL_NOTEQUAL or GL_GREATER work for this
-        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-    }
-
+    // Now, set up the shaders for perspective by using the regular camera
+    _SetupShaders(_camera);
     std::for_each(_prims.cbegin(), _prims.cend(),
                   [this, frameBufferType] (const FQGLPrimSharedPtr &prim) {
                       bool doTest = frameBufferType == FQGLPickingFramebufferType;
-                      bool didPass = _RenderPrim(prim, doTest);
+                      // XXX - this might get tricky if we expect pass or fail
+                      // for all prims. But, for now, we don't act on the result,
+                      // only primt it out.
+                      bool didPass = _RenderPrim(prim, false);
                       if (doTest) {
                           qDebug() << "Passed: " << didPass;
                       }
@@ -156,17 +172,19 @@ FQGLScene::GetScreenPointFromNDC(const QVector3D& ndcPoint) const
 {
     FQGLFrustum frustum = _camera->GetFrustum();
 
-    return frustum.NDCPointToScreen(_camera->GetUp(),
+    return frustum.ConvertToScreen(_camera->GetUp(),
                                     _camera->GetAspectRatio(), ndcPoint);
 }
 
 QVector3D
-FQGLScene::GetNDCPointFromScreen(const QVector2D& screenPoint) const
+FQGLScene::GetNDCPointFromScreen(const QVector2D& screenPoint,
+                                 const float & depth) const
 {
     FQGLFrustum frustum = _camera->GetFrustum();
 
-    return frustum.ScreenPointToFrustum(_camera->GetUp(), screenPoint,
-                                        _camera->GetAspectRatio());
+    return frustum.ConvertScreenToFrustum(_camera->GetUp(),
+                                          _camera->GetAspectRatio(),
+                                          screenPoint, depth);
 }
 
 uint
@@ -240,13 +258,27 @@ FQGLScene::InitShaders(const char * vshader,
 }
 
 void
+FQGLScene::_SetupShaders(const FQGLCameraSharedPtr& camera)
+{
+    _basicShader->bind();
+    _basicShader->setUniformValue("view", camera->GetViewMatrix());
+    _basicShader->setUniformValue("projection",
+                                  camera->GetProjectionMatrix());
+    _textureShader->bind();
+    _textureShader->setUniformValue("view", camera->GetViewMatrix());
+    _textureShader->setUniformValue("projection",
+                                    camera->GetProjectionMatrix());
+    _textureShader->setUniformValue("texture1", 0);
+}
+
+void
 FQGLScene::_InitPrims()
 {
     std::for_each(_prims.cbegin(), _prims.cend(),
                   [this] (const FQGLPrimSharedPtr &prim) {
                       prim->Initialize(this);
                   });
-    std::for_each(_stencilPrims.cbegin(), _stencilPrims.cend(),
+    std::for_each(_screenSpacePrims.cbegin(), _screenSpacePrims.cend(),
                   [this] (const FQGLPrimSharedPtr &prim) {
                       prim->Initialize(this);
                   });
@@ -256,11 +288,11 @@ bool
 FQGLScene::_RenderPrim(const FQGLPrimSharedPtr& prim, bool isTesting,
                        TestType testType)
 {
+    _PrimRenderState renderState(prim->IsStencil(), this);
     if (isTesting) {
         glBeginQuery(GL_SAMPLES_PASSED, _queryIds[0]);
         glBeginQuery(GL_ANY_SAMPLES_PASSED, _queryIds[0]);
     }
-
     prim->Render();
 
     if (isTesting) {

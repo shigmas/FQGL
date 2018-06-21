@@ -1,7 +1,6 @@
 #ifndef FQGL_SCENE
 #define FQGL_SCENE
 
-
 #include "FQGLTypes.h"
 
 #include <QOpenGLFunctions>
@@ -37,7 +36,7 @@ public:
     
     void Initialize();
 
-    void AddPrim(const FQGLPrimSharedPtr& prim, bool asStencilPrim=false);
+    void AddPrim(const FQGLPrimSharedPtr& prim);
 
     QOpenGLShaderProgramSharedPtr GetShader(bool getTexShader=true) const;
 
@@ -49,8 +48,10 @@ public:
     QVector2D GetScreenPointFromNDC(const QVector3D& ndcPoint) const;
 
     // For a screen point in 2D NDC space, it will return a 3D point in the
-    // camera frustum. The default is a depth of 0.0 (in the camera near plane.
-    QVector3D GetNDCPointFromScreen(const QVector2D& screenPoint) const;
+    // camera frustum. If -1.0f is passed in as the depth, it will use the
+    // near plane.
+    QVector3D GetNDCPointFromScreen(const QVector2D& screenPoint,
+                                    const float & depth) const;
 
     static QOpenGLShaderProgramSharedPtr InitShaders(const char * vertexShader,
                                                      const char * fragmentShader);
@@ -61,12 +62,27 @@ public:
     uint GetCurrentTextureBindingUnit() const;
 
 protected:
+    void _SetupShaders(const FQGLCameraSharedPtr& camera);
+    
+    void _InitPrims();
+
+    // Helper class which pushes stuff on the render stack when we render a
+    // prim, and resets is when we're done rendering the prim.
+    class _PrimRenderState {
+    public:
+        _PrimRenderState(bool isStencil, QOpenGLFunctions* functions);
+        ~_PrimRenderState();
+    private:
+        bool _isStencil;
+        QOpenGLFunctions* _functions;
+    };
+
+    friend _PrimRenderState;
+
     enum TestType {
         AllSamplePassedTestType,
         AnySamplePassedTestType,
     };
-    void _InitPrims();
-
     bool _RenderPrim(const FQGLPrimSharedPtr& prim, bool isTesting=false,
                      TestType testType=AllSamplePassedTestType);
     
@@ -74,10 +90,14 @@ private:
     QOpenGLShaderProgramSharedPtr _basicShader;
     QOpenGLShaderProgramSharedPtr _textureShader;
     FQGLCameraSharedPtr _camera;
+    FQGLCameraSharedPtr _screenSpaceCamera;
 
+    float _fov;
+    float _nearPlane;
+    float _farPlane;
     uint _currentTextureUnit;
     std::vector<FQGLPrimSharedPtr> _prims;
-    std::vector<FQGLPrimSharedPtr> _stencilPrims;
+    std::vector<FQGLPrimSharedPtr> _screenSpacePrims;
 
     const char * _shaders[3];
 
