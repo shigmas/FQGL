@@ -53,6 +53,14 @@ FQGLWidget::~FQGLWidget()
 {
     makeCurrent();
     qDebug() << "~FQGLWidget";
+    for (int i = 0 ; i < FQGL_NUM_FRAMEBUFFERS ; ++i) {
+        if (_framebuffers[i].first) {
+            _framebuffers[i].first->release();
+        }
+    }
+    // do the release for everything that we own
+    _scene->Release();
+    doneCurrent();
 }
 
 void

@@ -1,6 +1,8 @@
 QT       += core gui widgets opengl
 
-QMAKE_CXXFLAGS += -g
+CONFIG += c++14
+
+QMAKE_CXXFLAGS += -g -Wall
 
 TARGET = testFQGLWidget
 TEMPLATE = app

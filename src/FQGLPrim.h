@@ -20,6 +20,8 @@ struct FQGLPrimVertex
 FQGL_DECLARE_PTRS(QOpenGLBuffer);
 FQGL_DECLARE_PTRS(FQGLScene);
 FQGL_DECLARE_PTRS(QOpenGLShaderProgram);
+// class QOpenGLShaderProgram;
+// #define QOpenGLShaderProgramSharedPtr QOpenGLShaderProgram*
 FQGL_DECLARE_PTRS(QOpenGLTexture);
 FQGL_DECLARE_PTRS(QOpenGLVertexArrayObject);
 
@@ -28,6 +30,10 @@ class FQGLPrim : protected QOpenGLFunctions
 public:
     FQGLPrim(FQGLPrimViewType viewType=FQGLSceneViewType);
     virtual ~FQGLPrim();
+
+    // Releases any resources that are owned by this object, excluding memory,
+    // which will be done in the destructor.
+    virtual void Release();
 
     FQGLPrimViewType GetViewType() const;
 
@@ -105,10 +111,10 @@ private:
 
     QMatrix4x4 _transform;
     QVector2D _textureOffset;
-    QOpenGLShaderProgramSharedPtr _primShader;
-    QOpenGLBufferSharedPtr _vertexBuffer;
-    QOpenGLBufferSharedPtr _indexBuffer;
-    QOpenGLVertexArrayObjectSharedPtr _vao;
+    QOpenGLShaderProgramUniquePtr _primShader;
+    QOpenGLBufferUniquePtr _vertexBuffer;
+    QOpenGLBufferUniquePtr _indexBuffer;
+    QOpenGLVertexArrayObjectUniquePtr _vao;
 };
 
 #endif

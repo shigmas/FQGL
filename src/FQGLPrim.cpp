@@ -15,8 +15,10 @@ FQGLPrim::FQGLPrim(FQGLPrimViewType viewType) :
     _isStencil(false),
     _vertices(NULL),
     _indices(NULL),
+    _numIndices(0),
     _textureId(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS),
-    _texture(NULL)
+    _texture(NULL),
+    _scene(NULL)
 {
 }
 
@@ -28,12 +30,42 @@ FQGLPrim::~FQGLPrim()
      if (_indices) {
          delete [] _indices;
      }
+
      if (_texture) {
-         //         _texture->destroy();
-         //delete _texture;
+         delete _texture;
      }
 }
 
+void
+FQGLPrim::Release()
+{
+    qDebug() << "Cleaning up prim";
+    if (_texture) {
+        _texture->destroy();
+    }
+    if (_textureId != GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS) {
+        // Pass it to the scene to delete, since we're not a QOpenGLFunctions
+        // subclass
+        if (_scene) {
+            //_scene->DeleteTexture(_textureId);
+        }
+    }
+
+    if (_primShader) {
+        _primShader->release();
+    }
+
+    if (_vertexBuffer) {
+        _vertexBuffer->destroy();
+    }
+    if (_indexBuffer) {
+        _indexBuffer->destroy();
+    }
+
+    if (_vao) {
+        _vao->destroy();
+    }
+}    
 FQGLPrimViewType
 FQGLPrim::GetViewType() const
 {
@@ -62,7 +94,7 @@ FQGLPrim::Initialize(FQGLScene * scene)
         _texture = _InitializeTexture();
     }
 
-    _vao = std::make_shared<QOpenGLVertexArrayObject>();
+    _vao = std::make_unique<QOpenGLVertexArrayObject>();
     _vao->create();
     _vao->bind();
 
@@ -70,7 +102,7 @@ FQGLPrim::Initialize(FQGLScene * scene)
     // the vertex buffer
     _CreateGeometry(&_vertices, _numVertices);
 
-    _vertexBuffer = std::make_shared<QOpenGLBuffer>(QOpenGLBuffer::VertexBuffer);
+    _vertexBuffer = std::make_unique<QOpenGLBuffer>(QOpenGLBuffer::VertexBuffer);
     _vertexBuffer->create();
     _vertexBuffer->bind();
     _vertexBuffer->allocate(_vertices, _numVertices * sizeof(FQGLPrimVertex));
@@ -81,7 +113,7 @@ FQGLPrim::Initialize(FQGLScene * scene)
 
     if (_numIndices > 0) {
         _indexBuffer =
-            std::make_shared<QOpenGLBuffer>(QOpenGLBuffer::IndexBuffer);
+            std::make_unique<QOpenGLBuffer>(QOpenGLBuffer::IndexBuffer);
         _indexBuffer->create();
         _indexBuffer->bind();
         _indexBuffer->allocate(_indices, _numIndices * sizeof(GLuint));
@@ -89,7 +121,7 @@ FQGLPrim::Initialize(FQGLScene * scene)
 
     //    _vao->release();
 
-    QOpenGLShaderProgramSharedPtr shader =
+    const QOpenGLShaderProgramUniquePtr& shader =
         _primShader ? _primShader : _scene->GetShader();
 
     shader->bind();
@@ -134,7 +166,7 @@ FQGLPrim::Render()
 
     // XXX - If we're the prim's shader, the view or projection uniforms
     // haven't been set. So, fix that if we use _primShader.
-    QOpenGLShaderProgramSharedPtr shader =
+    const QOpenGLShaderProgramUniquePtr& shader =
         _primShader ? _primShader : _scene->GetShader(hasTex);
     shader->bind();
 

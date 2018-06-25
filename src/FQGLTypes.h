@@ -7,12 +7,14 @@
 template <typename T> struct FQGLDeclarePtrs {
     typedef std::shared_ptr< T > SharedPtr;
     typedef std::weak_ptr< T > Ptr;
+    typedef std::unique_ptr< T > UniquePtr;
 };
 
 #define FQGL_DECLARE_PTRS(type)  \
     class type;                  \
     typedef FQGLDeclarePtrs<class type>::SharedPtr  type##SharedPtr; \
-    typedef FQGLDeclarePtrs<class type>::Ptr        type##Ptr;
+    typedef FQGLDeclarePtrs<class type>::Ptr        type##Ptr;       \
+    typedef FQGLDeclarePtrs<class type>::UniquePtr  type##UniquePtr;
 
 enum FQGLPrimViewType {
     // It's still part of the scene, but drawn in the screen
