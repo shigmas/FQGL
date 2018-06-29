@@ -65,12 +65,14 @@ protected:
     // -------
     // Helper functions for subclasses
 
+    FQGLScene * _GetScene() const;
+    
     //QOpenGLTextureSharedPtr _InitializeTexture() const;
     QOpenGLTexture * _InitializeTexture() const;
 
-    // Textures are from TopLeft (0,0) to Bottom Right (1,1), So, take an NDC
-    // point and map it to a texture point.
-    QVector2D _NDCToTex(const QVector2D& ndc) const;
+    // Textures are from TopLeft (0,0) to Bottom Right (1,1), So, take a
+    // coordinate point and map it to a texture point.
+    QVector2D _CoordToTex(const QVector2D& coord) const;
 
     // This function allocates the vertices, and sets numVertices. This is
     // called by Initialize, so the scene is set, if we need it to transform

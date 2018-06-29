@@ -35,7 +35,7 @@ MainWidget::MainWidget(QWidget * parent) :
     _widget->SetScenePerspective(width(), height());
 
     QVector4D gray(.75, 0.25, 0.25, 1.0f);
-    _loupe = std::make_shared<SquareLoupePrim>(0.25, 1.2, gray);
+    _loupe = std::make_shared<SquareLoupePrim>(0.35, 1.2, gray);
     _loupe->SetTextureByResourcePath(":/resources/raideen.jpg");
     _widget->AddPrimToScene(_loupe);
 
@@ -67,8 +67,9 @@ MainWidget::~MainWidget()
 void
 MainWidget::HandleSingleTap(const QVector2D& location)
 {
-    QVector3D translateVec = _widget->ScreenToCoordinates(location);
-    //qDebug() << "Tap: " << location << "in scene: " << translateVec;
+    QVector2D coord = _widget->ScreenToCoordinates(location);
+    QVector3D translateVec = _widget->CoordToScene(coord, 3.0);
+    qDebug() << "Tap: " << location << "in scene: " << translateVec;
     _widget->EnableTextureBuffer();
     _loupe->SetTranslate(translateVec);
     // Drop the Z.
@@ -81,7 +82,8 @@ MainWidget::HandleRightTap(const QVector2D& location)
     qDebug() << "Right (" << location.x() << ", " << location.y() << ")";
 
     //QVector3D translateVec(location.x(), location.y(), 0.0f);
-    QVector3D translateVec = _widget->ToScenePoint(location);
+    QVector2D coord = _widget->ScreenToCoordinates(location);
+    QVector3D translateVec = _widget->CoordToScene(coord);
     QMatrix4x4 translateMat;
     translateMat.translate(translateVec);
     _widget->EnablePickTestingBuffer();

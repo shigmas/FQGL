@@ -32,23 +32,23 @@ void
 FQGLFrustumComputeTest::testPerspectiveScreenPoint()
 {
     QVector3D testPt(0.5f, -0.5f, 0.0f);
-    QVector2D screen = _compute->GetScreenPoint(testPt);
-    QVector3D testPtPrime = _compute->GetFrustumPoint(screen, 3.0f);
+    QVector2D screen = _compute->GetScreenPointFromFrustum(testPt);
+    QVector3D testPtPrime = _compute->GetFrustumPointFromScreen(screen, 3.0f);
     
     double radius = 0.5f;
     double l = sqrt(pow(radius, 2.0)*2);
     testPt = QVector3D(l, l, 0.0f);
     qDebug() << "orig: " << testPt;
-    screen = _compute->GetScreenPoint(testPt);
+    screen = _compute->GetScreenPointFromFrustum(testPt);
     qDebug() << "screen: " << screen;
 
     // Convert it back to the original
-    testPtPrime = _compute->GetFrustumPoint(screen, 3.0f);
+    testPtPrime = _compute->GetFrustumPointFromScreen(screen, 3.0f);
     qDebug() << "orig: " << testPtPrime;
 
     // Try negative
     testPt = QVector3D(-l, -l, 0.0f);
-    screen = _compute->GetScreenPoint(testPt);
+    screen = _compute->GetScreenPointFromFrustum(testPt);
     qDebug() << "screen: " << screen;
 
 }

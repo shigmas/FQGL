@@ -48,14 +48,19 @@ public:
                 FQGLFramebufferType frameBufferType);
 
     // For interactions, we provide screen <-> space conversions. This can also
-    // be used for texture points (with an extra conversion.
-    QVector2D GetScreenPointFromNDC(const QVector3D& ndcPoint) const;
+    // be used for texture points (with an extra conversion).
+    QVector2D GetScreenFromNDC(const QVector3D& ndcPoint) const;
 
     // For a screen point in 2D NDC space, it will return a 3D point in the
     // camera frustum. If -1.0f is passed in as the depth, it will use the
     // near plane.
-    QVector3D GetNDCPointFromScreen(const QVector2D& screenPoint,
+    QVector3D GetNDCFromScreen(const QVector2D& screenPoint,
                                     const float & depth) const;
+
+    QVector3D GetSceneFromCoordinate(const QVector2D& coordinatePoint,
+                                     const float & depth) const;
+
+    QVector2D GetCoordinateFromScene(const QVector3D& scenePoint) const;
 
     // static QOpenGLShaderProgramSharedPtr InitShaders(const char * vertexShader,
     //                                                  const char * fragmentShader);

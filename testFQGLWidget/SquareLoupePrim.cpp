@@ -1,5 +1,7 @@
 #include "SquareLoupePrim.h"
 
+#include "FQGLScene.h"
+
 #include <QQuaternion>
 #include <QtMath>
 
@@ -24,21 +26,31 @@ SquareLoupePrim::_CreateGeometry(FQGLPrimVertex **vertices,
     QVector3D center(0.0f, 0.0f, 0.0f);
     float halfSize = _length/2.0f;
 
+    Q_UNUSED(_magnification);
+
     numVertices = 4;
     int index = 0;
     FQGLPrimVertex *verts = new FQGLPrimVertex[numVertices];
+    FQGLScene * scene = _GetScene();
     // We just use 0 for the z. Screen space prims will be drawn in
     // orthographic, so we can easily move the z when we draw.
     for (int i = -1 ; i <= 1 ; i += 2) {
         for (int j = -1 ; j <= 1 ; j += 2) {
-            verts[index].location = QVector3D(center.x() + i*halfSize,
-                                              center.y() + j*halfSize, 2.89f);
+            QVector2D scene2d(center.x() + i*halfSize,
+                              center.y() + j*halfSize);
+            //verts[index].location = QVector3D(coord, 2.89f);
+            // This depth depends on the other prim - we want it to be at the
+            // same distance, since we want to be the equivalent size. We're
+            // really in the screen (since we're a stencil), but we want the
+            // size to be the same.
+            verts[index].location = QVector3D(scene2d, 0.0);
             verts[index].color = _color;
-            qDebug() << "NDC: " << verts[index].location << "tex: "
-                     << _NDCToTex(QVector2D(verts[index].location)) << "mag: "
-                     << _magnification;
-            verts[index].texture =
-                _NDCToTex(QVector2D(verts[index].location));
+            QVector2D coord =
+                scene->GetCoordinateFromScene(verts[index].location);
+            verts[index].texture = _CoordToTex(coord);
+            qDebug() << "loc: " << verts[index].location
+                     << ", " << coord
+                     << ", " << verts[index].texture;
             index++;
         }
     }

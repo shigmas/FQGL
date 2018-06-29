@@ -77,14 +77,25 @@ public:
                               const float& aspect,
                               const QVector3D& point) const;
 
-    // Takes an screen point and returns its equivalent point in the
-    // frustum's near plane. screen point is (0-1, 0-1)
+    QVector2D ConvertToCoordinate(const QVector3D& cameraUp,
+                                  const float& aspect,
+                                  const QVector3D& point) const;
+
+    // Takes a screen point is (0-1, 0-1) and returns its equivalent point in
+    // the frustum's near plane. screen point is (0-1, 0-1)
     // Note: To be visible, the return value may have to be slightly extended
     // to be slightly inside the frustum.
     QVector3D ConvertScreenToFrustum(const QVector3D& cameraUp,
                                      const float& aspect,
-                                     const QVector2D& screenPoint,
+                                     const QVector2D& screen,
                                      const float & depth) const;
+
+    // Takes a normalized coordinate point and returns its equivalent point in
+    // the frustum's near plane. screen point is (0-1, 0-1)
+    QVector3D ConvertCoordToFrustum(const QVector3D& cameraUp,
+                                    const float& aspect,
+                                    const QVector2D& coord,
+                                    const float & depth) const;
     
     // Testing for pick
     bool IsPointInFrustum(const QVector3D& point,

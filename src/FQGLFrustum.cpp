@@ -11,6 +11,8 @@ FQGLFrustum::FQGLFrustum(const float& width, const float& height,
                          const QVector3D& lookAt, const QVector3D& up) :
     FQGLFrustum(width, height, nearPlane, farPlane, position, lookAt)
 {
+    // since the initializer calls a delegating constructor, we can't have
+    // other initializations in it.
     _fovAngle = fovAngle;
     QVector3D dirNormal = _GetDirectionNormal(_position, _lookAt);
     QVector3D rightNormal = _GetRightNormal(up, dirNormal);
@@ -149,18 +151,39 @@ FQGLFrustum::ConvertToScreen(const QVector3D& cameraUp,
                               const QVector3D& point) const
 {
     FQGLFrustumCompute compute(_position, _lookAt, cameraUp, aspect, _fovAngle);
-    return compute.GetScreenPoint(point);
+    return compute.GetScreenPointFromFrustum(point);
+}
+
+QVector2D
+FQGLFrustum::ConvertToCoordinate(const QVector3D& cameraUp,
+                                 const float& aspect,
+                                 const QVector3D& point) const
+{
+    FQGLFrustumCompute compute(_position, _lookAt, cameraUp, aspect, _fovAngle);
+    return compute.GetCoordPointFromFrustum(point);
 }
 
 QVector3D
 FQGLFrustum::ConvertScreenToFrustum(const QVector3D& cameraUp,
                                     const float& aspect,
-                                    const QVector2D& screenPoint,
+                                    const QVector2D& screen,
                                     const float & depth) const
 {
     FQGLFrustumCompute compute(_position, _lookAt, cameraUp, aspect, _fovAngle);
-    return compute.GetFrustumPoint(screenPoint,
-                                   depth == -1.0f ? 0.1f : depth);
+    return compute.GetFrustumPointFromScreen(screen,
+                                             depth == -1.0f ? 0.1f : depth);
+
+}
+
+QVector3D
+FQGLFrustum::ConvertCoordToFrustum(const QVector3D& cameraUp,
+                                   const float& aspect,
+                                   const QVector2D& coord,
+                                   const float & depth) const
+{
+    FQGLFrustumCompute compute(_position, _lookAt, cameraUp, aspect, _fovAngle);
+    return compute.GetFrustumPointFromCoord(coord,
+                                            depth == -1.0f ? 0.1f : depth);
 }
 
 // If we already have a frustum, we can get a slice of that.
@@ -292,7 +315,7 @@ float
 FQGLFrustum::_GetHeightFromDistance(const float& dist, const float& fov) const
 {
     // from tan(alpha) = opp/adj;
-    float angle = qDegreesToRadians(fov)/2.0f;
+    float angle = qDegreesToRadians(fov/2.0f);
 
     return qTan(angle) * dist;
 }

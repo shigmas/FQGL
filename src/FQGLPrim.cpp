@@ -39,7 +39,6 @@ FQGLPrim::~FQGLPrim()
 void
 FQGLPrim::Release()
 {
-    qDebug() << "Cleaning up prim";
     if (_texture) {
         _texture->destroy();
     }
@@ -87,6 +86,7 @@ FQGLPrim::SetAsStencil(bool isStencil)
 void
 FQGLPrim::Initialize(FQGLScene * scene)
 {
+    Release();
     _scene = scene;
     initializeOpenGLFunctions();
 
@@ -100,6 +100,9 @@ FQGLPrim::Initialize(FQGLScene * scene)
 
     // Subclasses need to create the geometry. Get the vertices and populate
     // the vertex buffer
+    if (_vertices) {
+        delete [] _vertices;
+    }
     _CreateGeometry(&_vertices, _numVertices);
 
     _vertexBuffer = std::make_unique<QOpenGLBuffer>(QOpenGLBuffer::VertexBuffer);
@@ -109,6 +112,9 @@ FQGLPrim::Initialize(FQGLScene * scene)
 
     // Subclasses might also provide indices for drawing the geometry. The
     // default is not to have this array.
+    if (_indices) {
+         delete [] _indices;
+    }
     _CreateIndices(&_indices, _numIndices);
 
     if (_numIndices > 0) {
@@ -211,6 +217,12 @@ FQGLPrim::SetTranslate(const QVector3D& translate)
     SetTransform(mat);
 }
 
+FQGLScene *
+FQGLPrim::_GetScene() const
+{
+    return _scene;
+}
+
 //QOpenGLTextureSharedPtr
 QOpenGLTexture *
 FQGLPrim::_InitializeTexture() const
@@ -228,17 +240,10 @@ FQGLPrim::_InitializeTexture() const
 }
 
 QVector2D
-FQGLPrim::_NDCToTex(const QVector2D& ndc) const
+FQGLPrim::_CoordToTex(const QVector2D& coord) const
 {
-    return QVector2D((ndc.x() + 1.0f)/2.0f, (ndc.y() + 1.0f)/2.0f);
+    return QVector2D((coord.x() + 1.0f)/2.0f, (coord.y() + 1.0f)/2.0f);
 }
-
-// QVector2D
-// FQGLPrim::_CoordinatesToTex(const QVector3D& screen) const
-// {
-//     return QVector2D((screen.x() + 1.0f)/2.0f, (screen.y() + 1.0f)/2.0f);
-// }
-
 
 void
 FQGLPrim::_CreateIndices(uint **indices, uint &numIndices)

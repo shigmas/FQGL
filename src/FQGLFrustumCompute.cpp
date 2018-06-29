@@ -17,7 +17,16 @@ FQGLFrustumCompute::FQGLFrustumCompute(const QVector3D & position,
 }
 
 QVector2D
-FQGLFrustumCompute::GetScreenPoint(const QVector3D& point) const
+FQGLFrustumCompute::GetScreenPointFromFrustum(const QVector3D& point) const
+{
+    QVector2D coord = GetCoordPointFromFrustum(point);
+    // Convert from (0,1 to (-1,1)
+    return QVector2D((.5 * coord.x() + 0.5),
+                     (.5 * coord.y() + 0.5));
+}
+
+QVector2D
+FQGLFrustumCompute::GetCoordPointFromFrustum(const QVector3D& point) const
 {
     // Break down our vector into components, relative to our compute
     // parameters
@@ -25,32 +34,34 @@ FQGLFrustumCompute::GetScreenPoint(const QVector3D& point) const
 
     //  .5x + 0.5, then scale
     // Convert from model space to -1 to 1
-    float height = _GetHeightFromDistance(ptParts.z())/2.0f;
+    float height = _GetHeightFromDistance(ptParts.z());
     float width = height * _aspect;
 
     // normalize
-    float ptHeight = ptParts.y() / height;
-    float ptWidth = ptParts.x() / width;
-
-    // Convert from (0,1 to (-1,1)
-    return QVector2D((.5 * ptWidth + 0.5),
-                     (.5 * ptHeight + 0.5));
+    return QVector2D(ptParts.x() / width, ptParts.y() / height);
 }
 
 QVector3D
-FQGLFrustumCompute::GetFrustumPoint(const QVector2D& point,
-                                    const float & depth) const
+FQGLFrustumCompute::GetFrustumPointFromScreen(const QVector2D& screen,
+                                              const float & depth) const
 {
-    // Convert from (0,1) to (-1,1) space: 2(x - 0.5)
-    float ptHeight = 2.0f*point.y() - 1.0f;
-    float ptWidth = 2.0f*point.x() - 1.0f;
+    // Convert from (0,1) to (-1,1) space: 2(x - 0.5), then use the coord
+    // function
+    return GetFrustumPointFromCoord(QVector2D(2.0f*screen.x() - 1.0f,
+                                              2.0f*screen.y() - 1.0f),
+                                    depth);
+}
 
-    float height = _GetHeightFromDistance(depth)/2.0f;
+QVector3D
+FQGLFrustumCompute::GetFrustumPointFromCoord(const QVector2D& coord,
+                                             const float & depth) const
+{
+    float height = _GetHeightFromDistance(depth);
     float width = height * _aspect;
 
     // normalize to model, and piece by piece, add the different vectors to
     // our position
-    return _BuildFromComponents(ptWidth * width, ptHeight * height, depth);
+    return _BuildFromComponents(coord.x() * width, coord.y() * height, depth);
 }
 
 QVector3D
@@ -62,7 +73,7 @@ FQGLFrustumCompute::ConvertPointToDepth(const QVector3D& point,
     QVector3D ptParts = _GetComponents(point);
 
     // This is NDC, so we want the max X that is w/in the frustum
-    float heightAtPoint = _GetHeightFromDistance(ptParts.z())/2.0f;
+    float heightAtPoint = _GetHeightFromDistance(ptParts.z());
 
     // NDC, so these are ratios already.
     float heightRatio = ptParts.y() / heightAtPoint;
@@ -97,7 +108,7 @@ float
 FQGLFrustumCompute::_GetHeightFromDistance(const float& dist) const
 {
     // from tan(alpha) = opp/adj;
-    return qTan(qDegreesToRadians(_fov)) * dist;
+    return qTan(qDegreesToRadians(_fov/2.0)) * dist;
 }
 
 QVector3D

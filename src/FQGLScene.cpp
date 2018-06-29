@@ -40,8 +40,9 @@ FQGLScene::FQGLScene(int width, int height) :
     if (width && height) {
         _camera.SetPerspective(width, height, _fov, _nearPlane, _farPlane);
         // Essentially, the same 
-        _screenSpaceCamera.SetOrthographic(-1.0f, 1.0f, -1.0f, 1.0f,
-                                            _nearPlane, _farPlane);
+        _screenSpaceCamera.SetPerspective(width, height, _fov, _nearPlane, _farPlane);
+        // _screenSpaceCamera.SetOrthographic(-1.0f, 1.0f, -1.0f, 1.0f,
+        //                                     _nearPlane, _farPlane);
     }        
     for (int i = 0 ; i < 6 ; ++i) {
         _shaders[i] = NULL;
@@ -56,8 +57,8 @@ FQGLScene::FQGLScene(const char * vertexShader,
 {
     // We can't set the perspective camera yet, but we can still set
     // the orthographic.
-    _screenSpaceCamera.SetOrthographic(-1.0f, 1.0f, -1.0f, 1.0f,
-                                        _nearPlane, _farPlane);
+    // _screenSpaceCamera.SetOrthographic(-1.0f, 1.0f, -1.0f, 1.0f,
+    //                                     _nearPlane, _farPlane);
     _shaders[0] = vertexShader;
     _shaders[1] = basicShader;
     _shaders[2] = textureShader;
@@ -65,14 +66,6 @@ FQGLScene::FQGLScene(const char * vertexShader,
 
 FQGLScene::~FQGLScene()
 {
-    qDebug() << "Byebye";
-    qDebug() << "Destroying the shaders";
-    // if (_basicShader) {
-    //     delete _basicShader;
-    // }
-    // if (_textureShader) {
-    //     delete _textureShader;
-    // }
 }
 
 void
@@ -99,7 +92,11 @@ void
 FQGLScene::SetPerspective(int width, int height)
 {
     _camera.SetPerspective(width, height, _fov, _nearPlane, _farPlane);
+    _screenSpaceCamera.SetPerspective(width, height, _fov, _nearPlane, _farPlane);
     //_camera.SetPerspective(aspect, 45.0f, 0.1f, 100.0f);
+
+    // We need to regenerate the geometry for screen space prims
+    _InitPrims();
 }
 
 void
@@ -197,23 +194,44 @@ FQGLScene::Render(const QVector4D& clearColor,
 }
 
 QVector2D
-FQGLScene::GetScreenPointFromNDC(const QVector3D& ndcPoint) const
+FQGLScene::GetScreenFromNDC(const QVector3D& ndcPoint) const
 {
     FQGLFrustum frustum = _camera.GetFrustum();
 
     return frustum.ConvertToScreen(_camera.GetUp(),
-                                    _camera.GetAspectRatio(), ndcPoint);
+                                   _camera.GetAspectRatio(), ndcPoint);
 }
 
 QVector3D
-FQGLScene::GetNDCPointFromScreen(const QVector2D& screenPoint,
-                                 const float & depth) const
+FQGLScene::GetNDCFromScreen(const QVector2D& screenPoint,
+                            const float & depth) const
 {
     FQGLFrustum frustum = _camera.GetFrustum();
-
+ 
     return frustum.ConvertScreenToFrustum(_camera.GetUp(),
                                           _camera.GetAspectRatio(),
                                           screenPoint, depth);
+}
+
+QVector3D
+FQGLScene::GetSceneFromCoordinate(const QVector2D& coordinatePoint,
+                                  const float & depth) const
+{
+    FQGLFrustum frustum = _camera.GetFrustum();
+
+    return frustum.ConvertCoordToFrustum(_camera.GetUp(),
+                                         _camera.GetAspectRatio(),
+                                         coordinatePoint, depth);
+}
+
+QVector2D
+FQGLScene::GetCoordinateFromScene(const QVector3D& scenePoint) const
+{
+    FQGLFrustum frustum = _camera.GetFrustum();
+
+    return frustum.ConvertToCoordinate(_camera.GetUp(),
+                                       _camera.GetAspectRatio(),
+                                       scenePoint);
 }
 
 uint

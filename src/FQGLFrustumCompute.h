@@ -16,10 +16,18 @@ public:
                        const float & fov);
 
     // Gets the screen point for the given point. (0,1)
-    QVector2D GetScreenPoint(const QVector3D& point) const;
+    QVector2D GetScreenPointFromFrustum(const QVector3D& point) const;
 
-    QVector3D GetFrustumPoint(const QVector2D& point,
-                              const float & depth) const;
+    // Gets the screen point for the given point. (-1,1)
+    QVector2D GetCoordPointFromFrustum(const QVector3D& point) const;
+
+    // Converts a 2D screen point into a point in the frustum
+    QVector3D GetFrustumPointFromScreen(const QVector2D& point,
+                                        const float & depth) const;
+
+    // Converts a 2D coordinate point into a point in the frustum
+    QVector3D GetFrustumPointFromCoord(const QVector2D& point,
+                                       const float & depth) const;
 
     // Returns the equivalent point in the frustum at the given depth. (Note:
     // In the compute, we don't know the near and far planes, so this may still
@@ -34,7 +42,7 @@ protected:
     QVector3D _GetRightNormal(const QVector3D& up,
                               const QVector3D& dirNormal) const;
 
-    // Returns the TOTAL view height. So, this is above and below the eye
+    // Returns the TOTAL view height. So, this is above and below the eye.
     float _GetHeightFromDistance(const float& dist) const;
 
     // Returns the vector, relative to the camera. We return it as a vector

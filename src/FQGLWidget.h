@@ -59,7 +59,7 @@ public:
 
     // Converts the screen point to a point in the scene. By default, it will
     // be the near plane.
-    QVector3D ToScenePoint(const QVector2D& screenPoint,
+    QVector3D CoordToScene(const QVector2D& screenPoint,
                            const float& depth=-1.0f) const;
     
     // For want of a better name, coordinate is the (-1,-1) to (1,1)
@@ -84,7 +84,7 @@ protected:
     // handler and pass it on to here.
     bool _HandleGesture(QGestureEvent *event);
 
-    QVector2D _ToNDC(const int& x, const int& y) const;
+    QVector2D _ToCoord(const int& x, const int& y) const;
 
     QVector2D _ToScreen(const int& x, const int& y) const;
 

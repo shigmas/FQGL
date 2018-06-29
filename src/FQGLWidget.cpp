@@ -52,7 +52,6 @@ FQGLWidget::FQGLWidget(FQGLControllerPtr controller,
 FQGLWidget::~FQGLWidget()
 {
     makeCurrent();
-    qDebug() << "~FQGLWidget";
     for (int i = 0 ; i < FQGL_NUM_FRAMEBUFFERS ; ++i) {
         if (_framebuffers[i].first) {
             _framebuffers[i].first->release();
@@ -177,10 +176,10 @@ FQGLWidget::GetTextureIdFromLastRender()
 }
 
 QVector3D
-FQGLWidget::ToScenePoint(const QVector2D& screenPoint,
+FQGLWidget::CoordToScene(const QVector2D& screenPoint,
                          const float& depth) const
 {
-    return _scene->GetNDCPointFromScreen(screenPoint, depth);
+    return _scene->GetSceneFromCoordinate(screenPoint, depth);
 }
 
 QVector2D
@@ -337,14 +336,14 @@ FQGLWidget::_HandleGesture(QGestureEvent *event)
 }
 
 QVector2D
-FQGLWidget::_ToNDC(const int& x, const int& y) const
+FQGLWidget::_ToCoord(const int& x, const int& y) const
 {
     float mid = (float)width()/2.0;
-    float ndcX = (x - mid)/mid;
+    float coordX = (x - mid)/mid;
     mid = (float)height()/2.0;
-    float ndcY = (-y + mid)/mid;
+    float coordY = (-y + mid)/mid;
 
-    return QVector2D(ndcX, ndcY);
+    return QVector2D(coordX, coordY);
 }
 
 QVector2D
