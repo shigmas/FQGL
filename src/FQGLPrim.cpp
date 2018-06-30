@@ -186,8 +186,7 @@ FQGLPrim::Render()
 
     //shader->setUniformValue("texture1", GL_TEXTURE0);
     shader->setUniformValue("model", _transform);
-    //shader->setUniformValue("texOffset", _textureOffset);
-    shader->setAttributeValue("texOffset", _textureOffset);
+    shader->setAttributeValue("texCenter", _textureCenter);
     if (_numIndices) {
         glDrawElements(_GetDrawMode(WireFramePrimMode), _numIndices,
                        GL_UNSIGNED_INT, 0);
@@ -198,9 +197,9 @@ FQGLPrim::Render()
 }
 
 void
-FQGLPrim::SetTextureOffset(const QVector2D& textureOffset)
+FQGLPrim::SetTextureCenter(const QVector2D& textureCenter)
 {
-    _textureOffset = textureOffset;
+    _textureCenter = textureCenter;
 }
 
 void
@@ -243,6 +242,12 @@ QVector2D
 FQGLPrim::_CoordToTex(const QVector2D& coord) const
 {
     return QVector2D((coord.x() + 1.0f)/2.0f, (coord.y() + 1.0f)/2.0f);
+}
+
+QVector2D
+FQGLPrim::_TexToOffset(const QVector2D& coord) const
+{
+    return coord - QVector2D(0.5f, 0.5f);
 }
 
 void

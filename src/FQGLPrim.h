@@ -49,7 +49,8 @@ public:
     // may not have a difference for some prims.
     virtual void Render();
 
-    virtual void SetTextureOffset(const QVector2D& textureOffset);
+    // Sets the center of the texture. (The offsets of this are in a VBO
+    virtual void SetTextureCenter(const QVector2D& textureCenter);
 
     virtual void SetTransform(const QMatrix4x4& transform);
 
@@ -73,6 +74,8 @@ protected:
     // Textures are from TopLeft (0,0) to Bottom Right (1,1), So, take a
     // coordinate point and map it to a texture point.
     QVector2D _CoordToTex(const QVector2D& coord) const;
+
+    QVector2D _TexToOffset(const QVector2D& coord) const;
 
     // This function allocates the vertices, and sets numVertices. This is
     // called by Initialize, so the scene is set, if we need it to transform
@@ -112,7 +115,7 @@ private:
     FQGLScene * _scene;
 
     QMatrix4x4 _transform;
-    QVector2D _textureOffset;
+    QVector2D _textureCenter;
     QOpenGLShaderProgramUniquePtr _primShader;
     QOpenGLBufferUniquePtr _vertexBuffer;
     QOpenGLBufferUniquePtr _indexBuffer;

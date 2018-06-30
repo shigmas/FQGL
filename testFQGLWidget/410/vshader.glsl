@@ -10,12 +10,11 @@ out vec2 vTexCoords;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-in vec2 texOffset;
+in vec2 texCenter;
 
 void main()
 {
     vColor = aColor;
-    vTexCoords = aTexCoords + texOffset;
-    //vTexCoords = aTexCoords;
+    vTexCoords = aTexCoords + texCenter;
     gl_Position = projection * view * model * vec4(aPos, 1.0);
 }

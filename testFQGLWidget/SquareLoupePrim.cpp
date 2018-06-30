@@ -47,10 +47,8 @@ SquareLoupePrim::_CreateGeometry(FQGLPrimVertex **vertices,
             verts[index].color = _color;
             QVector2D coord =
                 scene->GetCoordinateFromScene(verts[index].location);
-            verts[index].texture = _CoordToTex(coord);
-            qDebug() << "loc: " << verts[index].location
-                     << ", " << coord
-                     << ", " << verts[index].texture;
+            verts[index].texture =
+                _TexToOffset(_CoordToTex(coord))/_magnification;
             index++;
         }
     }

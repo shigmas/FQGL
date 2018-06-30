@@ -61,12 +61,11 @@ public:
     // be the near plane.
     QVector3D CoordToScene(const QVector2D& screenPoint,
                            const float& depth=-1.0f) const;
-    
+
     // For want of a better name, coordinate is the (-1,-1) to (1,1)
-    QVector2D ScreenToCoordinates(const QVector2D& screenPoint,
+    QVector2D ScreenToCoordinate(const QVector2D& screenPoint,
                                   bool invertY = false) const;
 
-    
 protected:
     // QOpenGLWidget and QWidget overrides
     virtual void initializeGL() override;

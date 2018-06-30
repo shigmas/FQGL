@@ -183,7 +183,7 @@ FQGLWidget::CoordToScene(const QVector2D& screenPoint,
 }
 
 QVector2D
-FQGLWidget::ScreenToCoordinates(const QVector2D& screen,
+FQGLWidget::ScreenToCoordinate(const QVector2D& screen,
                                 bool invertY) const
 {
     float invert = invertY ? -1.0f : 1.0f;
