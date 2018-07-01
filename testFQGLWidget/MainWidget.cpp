@@ -5,8 +5,9 @@
 #include "FQGLScene.h"
 #include "FQGLWidget.h"
 
-#include "SquareLoupePrim.h"
 #include "CubePrim.h"
+#include "LoupePrim.h"
+#include "SquareLoupePrim.h"
 
 #include <QGridLayout>
 #include <QHBoxLayout>
@@ -35,7 +36,8 @@ MainWidget::MainWidget(QWidget * parent) :
     _widget->SetScenePerspective(width(), height());
 
     QVector4D gray(.75, 0.25, 0.25, 1.0f);
-    _loupe = std::make_shared<SquareLoupePrim>(0.35, 1.5, gray);
+    //_loupe = std::make_shared<SquareLoupePrim>(0.35, 1.5, gray);
+    _loupe = std::make_shared<LoupePrim>(0.35, 16, 1.5, gray);
     _loupe->SetTextureByResourcePath(":/resources/raideen.jpg");
     _widget->AddPrimToScene(_loupe);
 
@@ -89,6 +91,21 @@ MainWidget::HandleRightTap(const QVector2D& location)
     _widget->EnablePickTestingBuffer();
     _loupe->SetTransform(translateMat);
     //_loupe->SetTextureOffset(widget->ToTexPoint(location));
+}
+
+void
+MainWidget::HandleDrag(const QVector2D& location)
+{
+    qDebug() << "Drag (" << location.x() << ", " << location.y() << ")";
+    QVector2D coord = _widget->ScreenToCoordinate(location);
+    QVector3D translateVec = _widget->CoordToScene(coord, 3.0);
+    // qDebug() << "Tap: " << location << "in scene: " << translateVec;
+    _widget->EnableTextureBuffer();
+    _loupe->SetTranslate(translateVec);
+    // Drop the Z.
+    //_loupe->SetTextureCenter(_widget->ScreenToCoordinates(location));
+    _loupe->SetTextureCenter(location);
+
 }
 
 void

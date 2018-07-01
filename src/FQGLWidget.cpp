@@ -303,7 +303,10 @@ FQGLWidget::mousePressEvent(QMouseEvent *event)
 void
 FQGLWidget::mouseMoveEvent(QMouseEvent *event)
 {
-    qDebug() << "Mouse: (" << event->x() << ", " << event->y() << ")";
+    if (FQGLControllerSharedPtr ctrlr = FQGLControllerSharedPtr(_controller)) {
+        ctrlr->ReceivedDrag(_ToScreen(event->x(), event->y()),
+                            FQGLController::PrimaryDragType);
+    }
     update();
 }
 

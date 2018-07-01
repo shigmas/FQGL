@@ -13,11 +13,13 @@ SOURCES += main.cpp
 
 SOURCES += \
     SquareLoupePrim.cpp \
+    LoupePrim.cpp \
     CubePrim.cpp \
     MainWidget.cpp \
 
 HEADERS += \
     SquareLoupePrim.h \
+    LoupePrim.h \
     CubePrim.h \
     MainWidget.h \
 

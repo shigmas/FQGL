@@ -39,6 +39,16 @@ FQGLController::ReceivedTap(const QVector2D& location, TapType tapType) const
 }
 
 void
+FQGLController::ReceivedDrag(const QVector2D& location, DragType dragType) const
+{
+    if (_responder) {
+        if ((dragType == PrimaryDragType) || (dragType == SecondaryDragType)) {
+            _responder->HandleDrag(location);
+        }
+    }
+}
+
+void
 FQGLController::PreRenderComplete()
 {
     if (_responder) {

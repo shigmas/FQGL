@@ -19,6 +19,12 @@ public:
         RightTapType,
     };
 
+    enum DragType {
+        PrimaryDragType,      // regular, or single finger drag
+        SecondaryDragType,
+        TertiaryDragType,
+    };
+
     FQGLController();
     virtual ~FQGLController();
 
@@ -27,6 +33,8 @@ public:
     void SetResponder(FQGLResponder * responder);
 
     void ReceivedTap(const QVector2D& location, TapType tapType) const;
+
+    void ReceivedDrag(const QVector2D& location, DragType dragType) const;
 
     void PreRenderComplete();
 

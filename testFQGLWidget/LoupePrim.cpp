@@ -1,5 +1,7 @@
 #include "LoupePrim.h"
 
+#include "FQGLScene.h"
+
 #include <QQuaternion>
 #include <QtMath>
 
@@ -10,6 +12,7 @@ LoupePrim::LoupePrim(float radius, int numSamples, float magnification,
     _magnification(magnification),
     _color(color)
 {
+    SetAsStencil(true);
 }
 
 LoupePrim::~LoupePrim()
@@ -34,11 +37,14 @@ LoupePrim::_CreateGeometry(FQGLPrimVertex **vertices,
     // origin, and the circle is at the origin, so all this works fine in the
     // screen frustum.
     numVertices = _numSamples + 2;
+    FQGLScene * scene = _GetScene();
     FQGLPrimVertex *verts = new FQGLPrimVertex[numVertices];
     int i = 0;
     verts[i].location = locCenter;
     verts[i].color = _color;
-    verts[i].texture = _ScreenNdcToTex(locCenter);
+    QVector2D coord = scene->GetCoordinateFromScene(locCenter);
+    verts[i].texture =
+            _TexToOffset(_CoordToTex(coord))/_magnification;
     
     ++i;
     for ( ; i <= _numSamples ; ++i) {
@@ -48,12 +54,11 @@ LoupePrim::_CreateGeometry(FQGLPrimVertex **vertices,
             QQuaternion::fromAxisAndAngle(normal, qRadiansToDegrees(rotation));
         verts[i].location = posRot.rotatedVector(firstLocPoint) + locCenter;
         verts[i].color = _color;
-        // We'll translate these to camera points on render
-        // Convert location to a screen point
-        QVector3D screenNdc = _GetScreenPointFromNDCPoint(verts[i].location);
-        screenNdc /= _magnification;
-        verts[i].texture = _ScreenNdcToTex(screenNdc);
-        //qDebug() << i << "tex: " << verts[i].texture;
+        QVector2D coord =
+            scene->GetCoordinateFromScene(verts[i].location);
+        verts[i].texture =
+            _TexToOffset(_CoordToTex(coord))/_magnification;
+
     }
     verts[i].location = verts[1].location;
     verts[i].color = verts[1].color;

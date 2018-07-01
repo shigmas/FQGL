@@ -25,6 +25,8 @@ public:
     virtual void HandleSingleTap(const QVector2D& location) override;
     virtual void HandleRightTap(const QVector2D& location) override;
 
+    virtual void HandleDrag(const QVector2D& location) override;
+
     virtual void OnPreRenderComplete() override;
 
     virtual void OnRenderComplete() override;

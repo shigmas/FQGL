@@ -26,8 +26,6 @@ SquareLoupePrim::_CreateGeometry(FQGLPrimVertex **vertices,
     QVector3D center(0.0f, 0.0f, 0.0f);
     float halfSize = _length/2.0f;
 
-    Q_UNUSED(_magnification);
-
     numVertices = 4;
     int index = 0;
     FQGLPrimVertex *verts = new FQGLPrimVertex[numVertices];
