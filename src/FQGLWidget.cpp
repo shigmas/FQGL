@@ -222,7 +222,6 @@ FQGLWidget::paintGL()
         if (_framebuffers[i].second) {
             _framebuffers[i].first->bind();
             _scene->Render(_clearColor, (FQGLFramebufferType) i);
-            _scene->Render(_clearColor, (FQGLFramebufferType) i);
             didPreRender = true;
             if (i == FQGLTextureFramebufferType) {
                 _framebuffers[i].first->toImage().save("foo.png");
@@ -236,7 +235,6 @@ FQGLWidget::paintGL()
     
     QOpenGLFramebufferObject::bindDefault();
     glEnable(GL_DEPTH_TEST);
-    _scene->Render(_clearColor, FQGLDefaultFramebufferType);
     _scene->Render(_clearColor, FQGLDefaultFramebufferType);
 
     if (ctrlr) {

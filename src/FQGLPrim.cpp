@@ -40,7 +40,10 @@ void
 FQGLPrim::Release()
 {
     if (_texture) {
-        _texture->destroy();
+        _texture->release();
+        if (_texture->isCreated()) {
+            _texture->destroy();
+        }
     }
     if (_textureId != GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS) {
         // Pass it to the scene to delete, since we're not a QOpenGLFunctions

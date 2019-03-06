@@ -12,7 +12,6 @@ CubePrim::CubePrim(float length, const QVector4D& color) :
 CubePrim::~CubePrim()
 {
 }
-
 void
 CubePrim::_CreateGeometry(FQGLPrimVertex **vertices,
                             uint &numVertices)

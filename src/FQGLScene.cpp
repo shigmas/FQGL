@@ -44,9 +44,9 @@ FQGLScene::FQGLScene(int width, int height) :
         // _screenSpaceCamera.SetOrthographic(-1.0f, 1.0f, -1.0f, 1.0f,
         //                                     _nearPlane, _farPlane);
     }        
-    for (int i = 0 ; i < 6 ; ++i) {
-        _shaders[i] = NULL;
-    }
+    // for (int i = 0 ; i < 6 ; ++i) {
+    //     _shaders[i] = NULL;
+    // }
 }
 
 FQGLScene::FQGLScene(const char * vertexShader,
@@ -350,13 +350,13 @@ FQGLScene::_RenderPrim(const FQGLPrimSharedPtr& prim, bool isTesting,
 {
     _PrimRenderState renderState(prim->IsStencil(), this);
     if (isTesting) {
-        glBeginQuery(GL_SAMPLES_PASSED, _queryIds[0]);
+        //        glBeginQuery(GL_SAMPLES_PASSED, _queryIds[0]);
         glBeginQuery(GL_ANY_SAMPLES_PASSED, _queryIds[0]);
     }
     prim->Render();
 
     if (isTesting) {
-        glEndQuery(GL_SAMPLES_PASSED);
+        //        glEndQuery(GL_SAMPLES_PASSED);
         glEndQuery(GL_ANY_SAMPLES_PASSED);
 
         // What were the results of the query?

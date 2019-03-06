@@ -8,6 +8,13 @@ QT       += core gui widgets
 
 QMAKE_CXXFLAGS += -g -Wall
 
+macx {
+	CONFIG(debug, debug|release) {
+        QMAKE_CXXFLAGS += -fsanitize=address -shared-libasan
+        QMAKE_LFLAGS += -fsanitize=address -shared-libasan
+	}
+}
+
 CONFIG += c++14
 
 #CONFIG += static
@@ -39,7 +46,7 @@ SOURCES += \
         ../src/FQGLFrustum.cpp \
         ../src/FQGLPlane.cpp \
         ../src/FQGLPrim.cpp \
-	../src/FQGLResponder.cpp \
+        ../src/FQGLResponder.cpp \
         ../src/FQGLScene.cpp \
         ../src/FQGLWidget.cpp \
 
@@ -50,15 +57,21 @@ HEADERS += \
         ../src/FQGLFrustum.h \
         ../src/FQGLPlane.h \
         ../src/FQGLPrim.h \
-	../src/FQGLResponder.h \
+        ../src/FQGLResponder.h \
         ../src/FQGLScene.h \
         ../src/FQGLWidget.h \
 
-macx {
-    CONFIG += lib_bundle
+ios {
+    CONFIG += staticlib
+    #CONFIG += shared
+    CONFIG += framework
+
+    QMAKE_IOS_DEPLOYMENT_TARGET = 10
+    QMAKE_FRAMEWORK_BUNDLE_NAME = $$LIBRARY_NAME
 }
 
-macx {
+macx|ios {
+    CONFIG += lib_bundle
     # Link to fftreal framework
     # LIBS += -F$${fftreal_dir}
     # LIBS += -framework fftreal 
@@ -67,6 +80,18 @@ macx {
     FRAMEWORK_HEADERS.files = $${HEADERS}
     FRAMEWORK_HEADERS.path = Headers
     QMAKE_BUNDLE_DATA += FRAMEWORK_HEADERS
+
+	SRCDIR = $$PWD/../src
+
+    CONFIG(staticlib, shared|staticlib){
+        message("Adding copy for static framework")
+        # (using QMAKE_EXTRA_TARGET will be executed before linking, which is
+        # too early).
+        QMAKE_POST_LINK += mkdir -p $${TARGET}.framework/Headers && \
+            $$QMAKE_COPY $$SRCDIR/*.h $${TARGET}.framework/Headers && \
+            $$QMAKE_COPY $$OUT_PWD/lib$${TARGET}.a $${TARGET}.framework/$${TARGET} && \
+            $$QMAKE_RANLIB -s $${TARGET}.framework/$${TARGET}
+    }
 
 } else {
 
