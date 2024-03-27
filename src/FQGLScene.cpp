@@ -134,7 +134,7 @@ FQGLScene::Initialize()
     }
 
     // I don't think these need to be bound to anything
-    QOpenGLExtraFunctions::glGenQueries(2, _queryIds);
+    glGenQueries(2, _queryIds);
 
     _InitPrims();
 }
