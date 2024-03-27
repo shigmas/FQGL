@@ -25,7 +25,7 @@ if("${BUILD_TYPE}" STREQUAL "SHARED")
 endif()
 
 # dependencies
-find_package(Qt6 REQUIRED COMPONENTS Core OpenGLWidgets Test)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui OpenGLWidgets Test)
 find_package(OpenGL REQUIRED)
 
 include_directories( ${OPENGL_INCLUDE_DIRS} )
@@ -67,7 +67,7 @@ qt_add_library(FQGL SHARED
   src/FQGLWidget.cpp
 )
 
-target_link_libraries(FQGL PUBLIC Qt6::Core Qt6::OpenGLWidgets)
+target_link_libraries(FQGL PUBLIC Qt6::Core Qt6::Gui Qt6::OpenGLWidgets)
 # target_link_libraries(FQNClientTest PUBLIC FQGL Qt6::Core Qt6::OpenGL Qt6::Test)
 # target_link_libraries(FQNOperationTest PUBLIC FQGL Qt6::Core Qt6::OpenGL Qt6::Test)
 
