@@ -4,7 +4,8 @@
 #include "FQGLCamera.h"
 #include "FQGLTypes.h"
 
-#include <QOpenGLFunctions>
+#include <QOpenGLExtraFunctions>
+//#include <QOpenGLFunctions>
 #include <QVector2D>
 #include <QVector3D>
 #include <QVector4D>
@@ -20,7 +21,7 @@ FQGL_DECLARE_PTRS(QOpenGLShaderProgram)
 
 // Describes a scene. has a camera and prims. This is driven by the
 // FQGLwidget. It's the 3D world, not windowing
-class FQGLScene : protected QOpenGLFunctions
+class FQGLScene : protected QOpenGLExtraFunctions
 {
 public:
     FQGLScene(int width = 0, int height = 0);

@@ -134,7 +134,7 @@ FQGLScene::Initialize()
     }
 
     // I don't think these need to be bound to anything
-    //glGenQueries(2, _queryIds);
+    QOpenGLExtraFunctions::glGenQueries(2, _queryIds);
 
     _InitPrims();
 }
@@ -350,20 +350,20 @@ FQGLScene::_RenderPrim(const FQGLPrimSharedPtr& prim, bool isTesting,
 {
     _PrimRenderState renderState(prim->IsStencil(), this);
     if (isTesting) {
-        //        glBeginQuery(GL_SAMPLES_PASSED, _queryIds[0]);
-        //        glBeginQuery(GL_ANY_SAMPLES_PASSED, _queryIds[0]);
+        glBeginQuery(GL_SAMPLES_PASSED, _queryIds[0]);
+        glBeginQuery(GL_ANY_SAMPLES_PASSED, _queryIds[0]);
     }
     prim->Render();
 
     if (isTesting) {
-        //        glEndQuery(GL_SAMPLES_PASSED);
-        //glEndQuery(GL_ANY_SAMPLES_PASSED);
+        glEndQuery(GL_SAMPLES_PASSED);
+        glEndQuery(GL_ANY_SAMPLES_PASSED);
 
         // What were the results of the query?
         GLuint anySamplesPassed = 0;
         GLuint samplesPassed = 0;
-        //        glGetQueryObjectuiv(_queryIds[0], GL_QUERY_RESULT, &anySamplesPassed);
-        //glGetQueryObjectuiv(_queryIds[1], GL_QUERY_RESULT, &samplesPassed);
+        glGetQueryObjectuiv(_queryIds[0], GL_QUERY_RESULT, &anySamplesPassed);
+        glGetQueryObjectuiv(_queryIds[1], GL_QUERY_RESULT, &samplesPassed);
 
         // Now, depending on the testType, return true or false;
         switch (testType) {
